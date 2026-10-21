@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MikroTik DHCP Server — ISP/NOC হ্যান্ডবুক</title>
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text: #1e293b;
+            --text-secondary: #475569;
+            --border: #e2e8f0;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --code-bg: #f1f5f9;
+            --badge-info: #0ea5e9;
+            --badge-important: #f59e0b;
+            --badge-noc: #8b5cf6;
+            --badge-advanced: #ec4899;
+            --badge-production: #10b981;
+            --badge-caution: #ef4444;
+            --shadow: 0 1px 3px rgba(0,0,0,0.1);
+            --radius: 8px;
+        }
+        body.dark {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --text: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #334155;
+            --accent: #3b82f6;
+            --accent-hover: #60a5fa;
+            --code-bg: #0f172a;
+            --shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans Bengali', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            transition: background 0.2s, color 0.2s;
+        }
+        .container { display: flex; min-height: 100vh; }
+        /* TOC */
+        .toc {
+            width: 280px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 20px 16px;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            flex-shrink: 0;
+            font-size: 0.9rem;
+        }
+        .toc h3 { font-size: 1rem; margin-bottom: 12px; color: var(--accent); }
+        .toc ul { list-style: none; }
+        .toc li { margin-bottom: 4px; }
+        .toc a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background 0.15s;
+        }
+        .toc a:hover { background: var(--code-bg); color: var(--text); }
+        .toc .toc-sub { padding-left: 16px; font-size: 0.85rem; }
+        .toc .toc-sub a { color: var(--text-secondary); }
+        /* Main */
+        .main {
+            flex: 1;
+            padding: 32px 40px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        h1 { font-size: 1.8rem; margin-bottom: 8px; }
+        h2 { font-size: 1.4rem; margin: 32px 0 16px; border-bottom: 2px solid var(--accent); padding-bottom: 6px; }
+        h3 { font-size: 1.15rem; margin: 24px 0 12px; }
+        h4 { font-size: 1rem; margin: 16px 0 8px; color: var(--text-secondary); }
+        p { margin-bottom: 12px; }
+        ul, ol { margin: 8px 0 16px 24px; }
+        li { margin-bottom: 4px; }
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .header-controls { display: flex; gap: 8px; }
+        button {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 6px 14px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.15s;
+        }
+        button:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+        /* Code blocks */
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            overflow-x: auto;
+            position: relative;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            margin: 12px 0;
+        }
+        code {
+            font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+            background: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        pre code { background: none; padding: 0; }
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+            opacity: 0.7;
+        }
+        .copy-btn:hover { opacity: 1; background: var(--accent); color: #fff; }
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #fff;
+            margin-right: 6px;
+            margin-bottom: 4px;
+        }
+        .badge-info { background: var(--badge-info); }
+        .badge-important { background: var(--badge-important); }
+        .badge-noc { background: var(--badge-noc); }
+        .badge-advanced { background: var(--badge-advanced); }
+        .badge-production { background: var(--badge-production); }
+        .badge-caution { background: var(--badge-caution); }
+        /* Callout */
+        .callout {
+            border-left: 4px solid var(--accent);
+            background: var(--surface);
+            padding: 14px 18px;
+            border-radius: 0 var(--radius) var(--radius) 0;
+            margin: 16px 0;
+            box-shadow: var(--shadow);
+        }
+        .callout.warn { border-left-color: var(--badge-caution); }
+        .callout.noc { border-left-color: var(--badge-noc); }
+        .callout.prod { border-left-color: var(--badge-production); }
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 0.9rem;
+        }
+        th, td {
+            border: 1px solid var(--border);
+            padding: 10px 12px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th { background: var(--code-bg); font-weight: 600; }
+        /* Command format */
+        .cmd-block {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            margin: 16px 0;
+            box-shadow: var(--shadow);
+        }
+        .cmd-block .cmd-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .cmd-block .cmd-title { font-weight: 600; color: var(--accent); }
+        .cmd-block dt { font-weight: 600; margin-top: 8px; color: var(--text-secondary); font-size: 0.85rem; }
+        .cmd-block dd { margin-left: 0; margin-bottom: 4px; }
+        /* Dashboard */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin: 16px 0;
+        }
+        .dash-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+        .dash-card .num { font-size: 1.8rem; font-weight: 700; color: var(--accent); }
+        .dash-card .label { font-size: 0.85rem; color: var(--text-secondary); }
+        /* Progress */
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            margin: 8px 0;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        /* Responsive */
+        @media (max-width: 900px) {
+            .container { flex-direction: column; }
+            .toc { width: 100%; height: auto; position: static; border-right: none; border-bottom: 1px solid var(--border); max-height: 200px; }
+            .main { padding: 20px; }
+        }
+        @media print {
+            .toc, .copy-btn, .header-controls, .progress-bar { display: none; }
+            .main { max-width: 100%; padding: 0; }
+            body { background: #fff; color: #000; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            * { transition: none !important; }
+        }
+        /* Back to top */
+        #backToTop {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 100;
+        }
+        #backToTop:hover { background: var(--accent-hover); }
+        /* Search */
+        .search-box {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--surface);
+            color: var(--text);
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+        }
+        .search-box:focus { outline: 2px solid var(--accent); border-color: transparent; }
+        /* Filter chips */
+        .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+        .chip {
+            padding: 4px 14px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        .chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- TOC -->
+        <nav class="toc" id="toc">
+            <h3>📑 সূচিপত্র</h3>
+            <ul>
+                <li><a href="#overview">১. ওভারভিউ ও স্কোপ</a></li>
+                <li><a href="#pillars">২. পাঁচটি প্রধান স্তম্ভ</a></li>
+                <li><a href="#knowledge-tree">৩. নলেজ ট্রি</a></li>
+                <li><a href="#architecture">৪. আর্কিটেকচার</a></li>
+                <li><a href="#eli10">৫. ELI10 → ELI15 → Jargonize</a></li>
+                <li><a href="#why-how">৬. কেন ও কীভাবে</a></li>
+                <li><a href="#prereq">৭. পূর্বশর্ত</a></li>
+                <li><a href="#version-notes">৮. ভার্সন নোট</a></li>
+                <li><a href="#cli-map">৯. CLI / Winbox ম্যাপ</a></li>
+                <li><a href="#concept-design">১০. কনসেপ্ট ও ডিজাইন</a></li>
+                <li><a href="#config-levels">১১. কনফিগারেশন লেভেল</a></li>
+                <li><a href="#command-encyclopedia">১২. কমান্ড এনসাইক্লোপিডিয়া</a></li>
+                <li><a href="#safety">১৩. কনফিগারেশন সেফটি</a></li>
+                <li><a href="#verification">১৪. ভেরিফিকেশন ফ্রেমওয়ার্ক</a></li>
+                <li><a href="#monitoring">১৫. মনিটরিং ও লগ</a></li>
+                <li><a href="#flow">১৬. প্যাকেট ফ্লো</a></li>
+                <li><a href="#security">১৭. সিকিউরিটি</a></li>
+                <li><a href="#performance">১৮. পারফরম্যান্স</a></li>
+                <li><a href="#troubleshooting">১৯. ট্রাবলশুটিং</a></li>
+                <li><a href="#rca">২০. RCA টেবিল</a></li>
+                <li><a href="#failure-sim">২১. ফেইলিওর সিমুলেশন</a></li>
+                <li><a href="#recovery">২২. রিকভারি</a></li>
+                <li><a href="#best-practices">২৩. বেস্ট প্র্যাকটিস</a></li>
+                <li><a href="#production-config">২৪. প্রোডাকশন কনফিগ</a></li>
+                <li><a href="#scenario">২৫. বাস্তব ISP/NOC সিনারিও</a></li>
+                <li><a href="#lab-beginner">২৬. বিগিনার ল্যাব</a></li>
+                <li><a href="#lab-intermediate">২৭. ইন্টারমিডিয়েট ল্যাব</a></li>
+                <li><a href="#lab-advanced">২৮. অ্যাডভান্সড ল্যাব</a></li>
+                <li><a href="#lab-production">২৯. প্রোডাকশন ল্যাব</a></li>
+                <li><a href="#lab-vs-prod">৩০. ল্যাব vs প্রোডাকশন</a></li>
+                <li><a href="#interview">৩১. ইন্টারভিউ প্রশ্ন</a></li>
+                <li><a href="#challenge">৩২. ফাইনাল চ্যালেঞ্জ</a></li>
+                <li><a href="#cheatsheet">৩৩. চিটশিট</a></li>
+                <li><a href="#checklist">৩৪. মাস্টার চেকলিস্ট</a></li>
+                <li><a href="#audit">৩৫. কমপ্লিটনেস অডিট</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main" id="main">
+            <!-- Header -->
+            <div class="header">
+                <div>
+                    <h1>MikroTik DHCP Server</h1>
+                    <p style="color:var(--text-secondary);font-size:0.95rem;">ISP/NOC পরিবেশের জন্য বিস্তারিত হ্যান্ডবুক · RouterOS v6 + v7</p>
+                </div>
+                <div class="header-controls">
+                    <button id="themeToggle" onclick="toggleTheme()">🌙 ডার্ক</button>
+                    <button onclick="window.print()">🖨️ প্রিন্ট</button>
+                </div>
+            </div>
+
+            <!-- Progress -->
+            <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+            <!-- Search & Filters -->
+            <input type="text" class="search-box" id="searchBox" placeholder="🔍 খুঁজুন... (বাংলা / English / কমান্ড)" oninput="filterContent()">
+            <div class="filters">
+                <span class="chip active" data-filter="all" onclick="setFilter('all')">সব</span>
+                <span class="chip" data-filter="concept" onclick="setFilter('concept')">ধারণা</span>
+                <span class="chip" data-filter="config" onclick="setFilter('config')">কনফিগ</span>
+                <span class="chip" data-filter="command" onclick="setFilter('command')">কমান্ড</span>
+                <span class="chip" data-filter="verify" onclick="setFilter('verify')">যাচাই</span>
+                <span class="chip" data-filter="troubleshoot" onclick="setFilter('troubleshoot')">Troubleshooting</span>
+                <span class="chip" data-filter="security" onclick="setFilter('security')">Security</span>
+                <span class="chip" data-filter="lab" onclick="setFilter('lab')">Lab</span>
+                <span class="chip" data-filter="production" onclick="setFilter('production')">Production</span>
+            </div>
+
+            <!-- 1. Overview -->
+            <section id="overview" class="content-section" data-category="concept">
+                <h2>১. ওভারভিউ ও স্কোপ</h2>
+                <p><strong>Vendor:</strong> MikroTik | <strong>Topic:</strong> DHCP Server | <strong>Version:</strong> RouterOS v6 + v7 | <strong>Environment:</strong> ISP/NOC | <strong>Depth:</strong> Extensive</p>
+                <div class="callout">
+                    <strong>অনুমান:</strong> এই হ্যান্ডবুকটি ISP/NOC পরিবেশের জন্য লেখা, যেখানে একাধিক DHCP scope, static lease, relay এবং RADIUS integration সাধারণ। কমান্ড উদাহরণে placeholder ব্যবহার করা হয়েছে (যেমন <code>192.168.88.0/24</code>, <code>ether1</code>)। আপনার নেটওয়ার্ক অনুযায়ী মান বসান।
+                </div>
+                <p>DHCP (Dynamic Host Configuration Protocol) হলো এমন একটি প্রোটোকল যা নেটওয়ার্কে ক্লায়েন্ট ডিভাইসকে স্বয়ংক্রিয়ভাবে IP address, subnet mask, gateway, DNS সহ প্রয়োজনীয় নেটওয়ার্ক প্যারামিটার প্রদান করে। MikroTik RouterOS-এ DHCP Server একটি শক্তিশালী টুল যা ISP/NOC পরিবেশে subscriber management, static assignment, rate limiting এবং RADIUS integration-এর জন্য ব্যবহৃত হয়।</p>
+            </section>
+
+            <!-- 2. Pillars -->
+            <section id="pillars" class="content-section" data-category="concept">
+                <h2>২. পাঁচটি প্রধান স্তম্ভ</h2>
+                <div class="dashboard">
+                    <div class="dash-card"><div class="num">১</div><div class="label">কনসেপ্ট ও কনফিগারেশন</div></div>
+                    <div class="dash-card"><div class="num">২</div><div class="label">ভেন্ডর/OS কমান্ড</div></div>
+                    <div class="dash-card"><div class="num">৩</div><div class="label">হ্যান্ডস-অন ল্যাব</div></div>
+                    <div class="dash-card"><div class="num">৪</div><div class="label">ভেরিফিকেশন ও Troubleshooting</div></div>
+                    <div class="dash-card"><div class="num">৫</div><div class="label">বেস্ট প্র্যাকটিস</div></div>
+                </div>
+                <p>প্রতিটি স্তম্ভ এই হ্যান্ডবুকে বিস্তারিতভাবে কভার করা হয়েছে। ISP/NOC পরিবেশে DHCP Server-এর মূল কাজ হলো reliable IP allocation, lease management, security enforcement এবং troubleshooting capability নিশ্চিত করা।</p>
+            </section>
+
+            <!-- 3. Knowledge Tree -->
+            <section id="knowledge-tree" class="content-section" data-category="concept">
+                <h2>৩. নলেজ ট্রি</h2>
+                <pre><code>DHCP Server (MikroTik RouterOS)
+├── Core Concepts
+│   ├── DORA Process (Discover, Offer, Request, Ack)
+│   ├── Lease Lifecycle (waiting, testing, offered, bound, busy)
+│   ├── IP Pool Management
+│   └── DHCP Options (3, 6, 15, 42, 43, 82)
+├── Configuration
+│   ├── Basic Server Setup
+│   ├── Static Leases / Bindings
+│   ├── DHCP Relay (Option 82)
+│   ├── RADIUS Integration
+│   ├── Lease Scripts (automation)
+│   └── Rate Limiting (per-lease queue)
+├── Verification & Monitoring
+│   ├── Lease Status (bound/offered/testing)
+│   ├── Log (topic: dhcp)
+│   ├── Pool Usage
+│   └── Script Event Variables
+├── Security
+│   ├── Authoritative Mode
+│   ├── Static-only Leases
+│   ├── Option 82 (Relay Info)
+│   └── DHCP Snooping (switch side)
+└── Troubleshooting
+    ├── Lease Conflicts
+    ├── Pool Exhaustion
+    ├── Relay Issues
+    └── Script Failures</code></pre>
+            </section>
+
+            <!-- 4. Architecture -->
+            <section id="architecture" class="content-section" data-category="concept">
+                <h2>৪. আর্কিটেকচার / টপোলজি</h2>
+                <pre><code>[ISP Core / NOC]
+       |
+   [Router] (DHCP Server)
+       |
+   [Access Switch] (DHCP Relay / Option 82)
+       |
+   [Subscriber CPE] (DHCP Client)
+       |
+   [End Devices]</code></pre>
+                <p>ISP/NOC পরিবেশে সাধারণত DHCP Server কেন্দ্রীয়ভাবে থাকে এবং access layer-এ DHCP Relay ব্যবহার করে multiple broadcast domain থেকে request পাঠানো হয়। Option 82 (Relay Agent Information) ব্যবহার করে subscriber-এর port/subscriber identity ট্র্যাক করা যায়।</p>
+            </section>
+
+            <!-- 5. ELI10 -->
+            <section id="eli10" class="content-section" data-category="concept">
+                <h2>৫. ELI10 → ELI15 → Jargonize</h2>
+                <h3>ELI10 (১০ বছরের বাচ্চাকে বোঝানো)</h3>
+                <p>ধরো তোমার বাড়িতে অনেক গেস্ট আসে। প্রত্যেককে একটা করে রুম নম্বর দিতে হয়। DHCP Server হলো সেই রিসেপশনিস্ট যে প্রত্যেক গেস্টকে (ডিভাইস) একটা রুম নম্বর (IP address) দেয়, বলে দেয় বাথরুম কোথায় (gateway), আর কতক্ষণ থাকতে পারবে (lease time)।</p>
+                <h3>ELI15</h3>
+                <p>নেটওয়ার্কে প্রতিটি ডিভাইসের একটি unique IP address দরকার। DHCP Server স্বয়ংক্রিয়ভাবে এই address বিতরণ করে, যাতে ম্যানুয়ালি প্রতিটি ডিভাইসে IP বসাতে না হয়। MikroTik RouterOS-এ DHCP Server শুধু IP দেয় না, চাইলে নির্দিষ্ট MAC address-কে নির্দিষ্ট IP (static lease), bandwidth limit (rate-limit), এমনকি RADIUS server থেকে policy নিয়েও configure করতে পারে।</p>
+                <h3>Jargonize</h3>
+                <p>DHCP Server হলো RFC 2131 অনুসারে DORA (Discover-Offer-Request-Ack) চার-ধাপের প্রক্রিয়ায় lease প্রদানকারী সার্ভিস। MikroTik-এ <code>/ip dhcp-server</code> sub-menu-এর অধীনে server instance, <code>/ip pool</code>-এ address range, এবং <code>/ip dhcp-server lease</code>-এ lease state (bound, testing, offered, busy, waiting) ম্যানেজ করা হয়। ISP পরিবেশে RADIUS integration, Option 82 relay information, এবং per-lease rate-limit গুরুত্বপূর্ণ ফিচার।</p>
+            </section>
+
+            <!-- 6. Why How -->
+            <section id="why-how" class="content-section" data-category="concept">
+                <h2>৬. কেন ও কীভাবে</h2>
+                <p><strong>কেন DHCP Server?</strong> ম্যানুয়াল IP assignment বড় নেটওয়ার্কে অসম্ভব। DHCP centralize করে IP management, reduces human error, enables dynamic reclamation of addresses, এবং policy enforcement (rate-limit, DNS, gateway) সম্ভব করে।</p>
+                <p><strong>কীভাবে কাজ করে?</strong> ক্লায়েন্ট broadcast করে DHCP Discover পাঠায় → সার্ভার Offer দেয় → ক্লায়েন্ট Request করে → সার্ভার Ack দিয়ে lease bound করে। MikroTik-এ lease প্রথমে <code>testing</code> state-এ থাকে (ARP probe করে), তারপর <code>offered</code>, তারপর <code>bound</code> হয় [citation:11]।</p>
+            </section>
+
+            <!-- 7. Prerequisites -->
+            <section id="prereq" class="content-section" data-category="concept">
+                <h2>৭. পূর্বশর্ত ও ডিপেন্ডেন্সি</h2>
+                <ul>
+                    <li>RouterOS v6 বা v7 ইনস্টল করা MikroTik রাউটার</li>
+                    <li>ইন্টারফেসে IP address configured (DHCP server-এর জন্য)</li>
+                    <li>IP Pool তৈরি (স্বয়ংক্রিয় বা ম্যানুয়াল)</li>
+                    <li>DNS server configured (যদি DNS option দিতে হয়)</li>
+                    <li>NTP (যদি সময়-সংক্রান্ত লগ দরকার)</li>
+                    <li>Relay ব্যবহার করলে: relay router-এ <code>/ip dhcp-relay</code> কনফিগ</li>
+                    <li>RADIUS ব্যবহার করলে: RADIUS server reachable</li>
+                </ul>
+            </section>
+
+            <!-- 8. Version Notes -->
+            <section id="version-notes" class="content-section" data-category="concept">
+                <h2>৮. ভেন্ডর / OS / ভার্সন নোট</h2>
+                <div class="callout warn">
+                    <strong>RouterOS v6 vs v7:</strong> DHCP Server-এর মূল কনফিগারেশন v6 এবং v7-এ প্রায় একই। তবে v7-এ IPv6 DHCP-PD-তে উন্নতি হয়েছে [citation:2]। v7-এ RADIUS integration এবং scripting-এ কিছু পার্থক্য থাকতে পারে। <span class="badge badge-important">VERSION-DEPENDENT</span> কমান্ডে v6/v7 আলাদা উল্লেখ করা হবে।
+                </div>
+                <p>MikroTik DHCP Server IPv4 এবং IPv6 উভয়ের জন্য আলাদা sub-menu ব্যবহার করে: <code>/ip dhcp-server</code> (IPv4) এবং <code>/ipv6 dhcp-server</code> (IPv6/PD)। এই হ্যান্ডবুক প্রধানত IPv4 DHCP Server-এ ফোকাস করে, তবে IPv6 প্রাসঙ্গিক স্থানে উল্লেখ করা হয়েছে।</p>
+            </section>
+
+            <!-- 9. CLI Map -->
+            <section id="cli-map" class="content-section" data-category="config">
+                <h2>৯. CLI / Winbox / GUI ম্যাপ</h2>
+                <table>
+                    <tr><th>কাজ</th><th>CLI Path</th><th>Winbox Path</th></tr>
+                    <tr><td>DHCP Server তৈরি</td><td><code>/ip dhcp-server add</code></td><td>IP → DHCP Server → DHCP tab → +</td></tr>
+                    <tr><td>IP Pool তৈরি</td><td><code>/ip pool add</code></td><td>IP → Pool → +</td></tr>
+                    <tr><td>Static Lease</td><td><code>/ip dhcp-server lease add</code></td><td>IP → DHCP Server → Leases → +</td></tr>
+                    <tr><td>Lease দেখুন</td><td><code>/ip dhcp-server lease print</code></td><td>IP → DHCP Server → Leases</td></tr>
+                    <tr><td>DHCP Relay</td><td><code>/ip dhcp-relay add</code></td><td>IP → DHCP Relay → +</td></tr>
+                    <tr><td>Networks</td><td><code>/ip dhcp-server network add</code></td><td>IP → DHCP Server → Networks → +</td></tr>
+                    <tr><td>Log</td><td><code>/log print where topics~"dhcp"</code></td><td>Log → Filter</td></tr>
+                </table>
+            </section>
+
+            <!-- 10. Concept & Design -->
+            <section id="concept-design" class="content-section" data-category="concept">
+                <h2>১০. কনসেপ্ট ও ডিজাইন</h2>
+                <h3>Lease Lifecycle</h3>
+                <p>MikroTik-এ lease state:</p>
+                <ul>
+                    <li><strong>waiting:</strong> lease unused</li>
+                    <li><strong>testing:</strong> সার্ভার ARP probe পাঠিয়ে দেখছে address অন্য কেউ ব্যবহার করছে কিনা (0.5s wait)</li>
+                    <li><strong>offered:</strong> ক্লায়েন্টকে offer দেওয়া হয়েছে</li>
+                    <li><strong>bound:</strong> lease সফলভাবে assign হয়েছে</li>
+                    <li><strong>busy:</strong> address conflict বা অন্য কারণে block</li>
+                </ul>
+                <p>Static lease-এ testing step skip হয় (কোনো ARP probe হয় না) [citation:11]।</p>
+                <h3>Design Considerations (ISP/NOC)</h3>
+                <ul>
+                    <li>প্রতি subscriber VLAN/interface-এ আলাদা DHCP server instance অথবা relay</li>
+                    <li>Lease time: ISP-তে সাধারণত ১০ মিনিট থেকে ১ ঘণ্টা (দ্রুত failover-এর জন্য ছোট lease)</li>
+                    <li>Authoritative mode: ভুল request দ্রুত reject করতে</li>
+                    <li>Option 82: relay থেকে subscriber port তথ্য নিতে</li>
+                    <li>RADIUS: centralized authentication/authorization এবং rate-limit</li>
+                </ul>
+            </section>
+
+            <!-- 11. Config Levels -->
+            <section id="config-levels" class="content-section" data-category="config">
+                <h2>১১. বেসিক → ইন্টারমিডিয়েট → অ্যাডভান্সড কনফিগারেশন</h2>
+                <h3>বেসিক: সাধারণ DHCP Server</h3>
+                <pre><code># ১. IP Pool তৈরি
+/ip pool add name=dhcp_pool1 ranges=192.168.88.10-192.168.88.200
+
+# ২. DHCP Network (gateway, DNS, netmask)
+/ip dhcp-server network add address=192.168.88.0/24 gateway=192.168.88.1 dns-server=8.8.8.8,1.1.1.1
+
+# ৩. DHCP Server instance
+/ip dhcp-server add name=dhcp1 interface=bridge1 address-pool=dhcp_pool1 lease-time=1h disabled=no
+
+# ৪. যাচাই
+/ip dhcp-server lease print
+/ip dhcp-server print</code></pre>
+
+                <h3>ইন্টারমিডিয়েট: Static Lease + Rate Limit</h3>
+                <pre><code># Static lease তৈরি (MAC → fixed IP)
+/ip dhcp-server lease add address=192.168.88.50 mac-address=AA:BB:CC:DD:EE:01 server=dhcp1 comment="Server-01"
+
+# Static lease-এ rate limit (dynamic simple queue তৈরি হবে)
+/ip dhcp-server lease set [find mac-address=AA:BB:CC:DD:EE:01] rate-limit=10M/10M
+
+# যাচাই: queue তৈরি হয়েছে কিনা
+/queue simple print where name~"dhcp-ds"</code></pre>
+                <div class="callout">
+                    <strong>নোট:</strong> Rate limit শুধু static lease-এ কাজ করে। প্রথমে <code>make-static</code> করতে হবে [citation:6]। FastTracked traffic-এ queue কাজ করে না, তাই firewall-এ FastTrack disable করতে হতে পারে।
+                </div>
+
+                <h3>অ্যাডভান্সড: DHCP Relay + Option 82</h3>
+                <pre><code># Relay router-এ (client-এর দিকে)
+/ip dhcp-relay add name=relay1 interface=ether2 dhcp-server=10.0.0.1 local-address=10.0.0.2 add-relay-info=yes
+
+# Server-এ Option 82 তথ্য log/script-এ ব্যবহার
+# lease script-এ $lease-agent-circuit-id এবং $lease-agent-remote-id পাওয়া যাবে</code></pre>
+            </section>
+
+            <!-- 12. Command Encyclopedia -->
+            <section id="command-encyclopedia" class="content-section" data-category="command">
+                <h2>১২. কমান্ড এনসাইক্লোপিডিয়া</h2>
+
+                <!-- Command 1 -->
+                <div class="cmd-block">
+                    <div class="cmd-header"><span class="cmd-title">COMMAND #1 — DHCP Server তৈরি</span><span class="badge badge-info">READ-ONLY নয়</span></div>
+                    <dl>
+                        <dt>Vendor / OS / Version:</dt><dd>MikroTik RouterOS v6 + v7</dd>
+                        <dt>Command:</dt><dd><code>/ip dhcp-server add name=dhcp1 interface=bridge1 address-pool=dhcp_pool1 lease-time=1h disabled=no</code></dd>
+                        <dt>Purpose:</dt><dd>DHCP Server instance তৈরি করা</dd>
+                        <dt>When to use:</dt><dd>নতুন subnet/interface-এ DHCP চালু করতে</dd>
+                        <dt>Mode / Menu:</dt><dd><code>/ip dhcp-server</code></dd>
+                        <dt>Parameters:</dt><dd><code>name</code> (string), <code>interface</code> (interface name), <code>address-pool</code> (pool name), <code>lease-time</code> (time), <code>disabled</code> (yes/no)</dd>
+                        <dt>Example:</dt><dd><code>/ip dhcp-server add name=lan-dhcp interface=bridge-lan address-pool=lan-pool lease-time=30m disabled=no</code></dd>
+                        <dt>Expected key fields / result:</dt><dd>Server list-এ নতুন entry, <code>disabled=no</code> হলে active</dd>
+                        <dt>Related commands:</dt><dd><code>/ip pool add</code>, <code>/ip dhcp-server network add</code></dd>
+                        <dt>Troubleshooting interpretation:</dt><dd>Server তৈরি হয়েছে কিন্তু lease হচ্ছে না → interface-এ IP আছে কিনা, pool-এ address আছে কিনা দেখুন</dd>
+                        <dt>Risk / Caveat:</dt><dd>ভুল interface দিলে অন্য interface-এর request-ও ধরতে পারে</dd>
+                        <dt>Badges:</dt><dd><span class="badge badge-important">DISRUPTIVE</span> <span class="badge badge-info">READ-ONLY নয়</span></dd>
+                    </dl>
+                </div>
+
+                <!-- Command 2 -->
+                <div class="cmd-block">
+                    <div class="cmd-header"><span class="cmd-title">COMMAND #2 — Lease Status দেখা</span><span class="badge badge-info">READ-ONLY</span></div>
+                    <dl>
+                        <dt>Vendor / OS / Version:</dt><dd>MikroTik RouterOS v6 + v7</dd>
+                        <dt>Command:</dt><dd><code>/ip dhcp-server lease print</code></dd>
+                        <dt>Purpose:</dt><dd>সকল lease এবং তাদের state দেখা</dd>
+                        <dt>When to use:</dt><dd>কোন client কী IP পেয়েছে, lease কখন expire হবে তা জানতে</dd>
+                        <dt>Mode / Menu:</dt><dd><code>/ip dhcp-server lease</code></dd>
+                        <dt>Parameters:</dt><dd>Flags: <code>D</code>=dynamic, <code>X</code>=disabled, <code>R</code>=radius, <code>B</code>=blocked</dd>
+                        <dt>Example:</dt><dd><code>/ip dhcp-server lease print where status=bound</code></dd>
+                        <dt>Expected key fields / result:</dt><dd>ADDRESS, MAC-ADDRESS, HOST-NAME, SERVER, STATUS, expires-after</dd>
+                        <dt>Related commands:</dt><dd><code>/ip dhcp-server lease print detail</code></dd>
+                        <dt>Troubleshooting interpretation:</dt><dd>Status <code>testing</code>-এ আটকে থাকলে address conflict হতে পারে; <code>busy</code> হলে ARP probe failed</dd>
+                        <dt>Risk / Caveat:</dt><dd>কিছু নেই (read-only)</dd>
+                        <dt>Badges:</dt><dd><span class="badge badge-info">READ-ONLY</span></dd>
+                    </dl>
+                </div>
+
+                <!-- Command 3 -->
+                <div class="cmd-block">
+                    <div class="cmd-header"><span class="cmd-title">COMMAND #3 — Static Lease তৈরি</span></div>
+                    <dl>
+                        <dt>Vendor / OS / Version:</dt><dd>MikroTik RouterOS v6 + v7</dd>
+                        <dt>Command:</dt><dd><code>/ip dhcp-server lease add address=192.168.88.50 mac-address=AA:BB:CC:DD:EE:01 server=dhcp1 comment="Fixed-Client"</code></dd>
+                        <dt>Purpose:</dt><dd>নির্দিষ্ট MAC-কে সবসময় একই IP দেওয়া</dd>
+                        <dt>When to use:</dt><dd>Server, printer, AP, বা নির্দিষ্ট subscriber-এর জন্য</dd>
+                        <dt>Mode / Menu:</dt><dd><code>/ip dhcp-server lease</code></dd>
+                        <dt>Parameters:</dt><dd><code>address</code>, <code>mac-address</code>, <code>server</code>, <code>comment</code>, <code>rate-limit</code> (optional)</dd>
+                        <dt>Example:</dt><dd><code>/ip dhcp-server lease add address=10.10.10.5 mac-address=00:11:22:33:44:55 server=isp-dhcp comment="Subscriber-001"</code></dd>
+                        <dt>Expected key fields / result:</dt><dd>Lease list-এ static entry (D flag নেই)</dd>
+                        <dt>Related commands:</dt><dd><code>/ip dhcp-server lease make-static</code> (dynamic থেকে static)</dd>
+                        <dt>Troubleshooting interpretation:</dt><dd>Client এখনও অন্য IP পাচ্ছে → MAC ঠিক আছে কিনা, server name মিলছে কিনা</dd>
+                        <dt>Risk / Caveat:</dt><dd>ভুল MAC দিলে lease কখনো match করবে না</dd>
+                    </dl>
+                </div>
+
+                <!-- Command 4 -->
+                <div class="cmd-block">
+                    <div class="cmd-header"><span class="cmd-title">COMMAND #4 — Lease Script</span></div>
+                    <dl>
+                        <dt>Vendor / OS / Version:</dt><dd>MikroTik RouterOS v6.39rc33+ (v6+v7)</dd>
+                        <dt>Command:</dt><dd><code>/ip dhcp-server set dhcp1 lease-script=":log info \"Lease: \$leaseActIP MAC: \$leaseActMAC Bound: \$leaseBound\""</code></dd>
+                        <dt>Purpose:</dt><dd>Lease assign/release-এ automatic action চালানো</dd>
+                        <dt>When to use:</dt><dd>Logging, dynamic queue, address-list update, external webhook</dd>
+                        <dt>Mode / Menu:</dt><dd><code>/ip dhcp-server</code></dd>
+                        <dt>Parameters:</dt><dd>Script variables: <code>$leaseBound</code> (1/0), <code>$leaseActIP</code>, <code>$leaseActMAC</code>, <code>$leaseServerName</code>, <code>$lease-hostname</code> (v7), <code>$lease-agent-circuit-id</code> (v7) [citation:15]</dd>
+                        <dt>Example:</dt><dd>উপরে দেখানো inline script</dd>
+                        <dt>Expected key fields / result:</dt><dd><code>/log print where topics~"dhcp"</code>-এ log entry</dd>
+                        <dt>Related commands:</dt><dd><code>/system script add</code> (external script), <code>/log print</code></dd>
+                        <dt>Troubleshooting interpretation:</dt><dd>Script silent fail হলে <code>:log warning</code> দিয়ে শুরু করুন; script error <code>script</code> topic-এ log হয়</dd>
+                        <dt>Risk / Caveat:</dt><dd>Infinite loop বা heavy script DHCP performance কমাতে পারে</dd>
+                        <dt>Badges:</dt><dd><span class="badge badge-advanced">ADVANCED</span></dd>
+                    </dl>
+                </div>
+
+                <!-- Command 5 -->
+                <div class="cmd-block">
+                    <div class="cmd-header"><span class="cmd-title">COMMAND #5 — DHCP Relay কনফিগার</span></div>
+                    <dl>
+                        <dt>Vendor / OS / Version:</dt><dd>MikroTik RouterOS v6 + v7</dd>
+                        <dt>Command:</dt><dd><code>/ip dhcp-relay add name=relay1 interface=ether2 dhcp-server=10.0.0.1 local-address=10.0.0.2 add-relay-info=yes</code></dd>
+                        <dt>Purpose:</dt><dd>একই broadcast domain-এ না থাকা DHCP server-এ request forward করা</dd>
+                        <dt>When to use:</dt><dd>Centralized DHCP server, distributed access layer</dd>
+                        <dt>Mode / Menu:</dt><dd><code>/ip dhcp-relay</code></dd>
+                        <dt>Parameters:</dt><dd><code>interface</code> (client-facing), <code>dhcp-server</code> (server IP list), <code>local-address</code>, <code>add-relay-info</code> (Option 82)</dd>
+                        <dt>Example:</dt><dd>উপরে দেখানো</dd>
+                        <dt>Expected key fields / result:</dt><dd>Relay active; server-এ lease তৈরি হবে client-এর subnet থেকে</dd>
+                        <dt>Related commands:</dt><dd><code>/ip dhcp-server</code> (server side)</dd>
+                        <dt>Troubleshooting interpretation:</dt><dd>Relay করে lease না পেলে: server-এ route আছে কিনা, firewall UDP 67 allow কিনা</dd>
+                        <dt>Risk / Caveat:</dt><dd>একই interface-এ server ও relay দিলে loop হতে পারে</dd>
+                        <dt>Badges:</dt><dd><span class="badge badge-noc">NOC</span></dd>
+                    </dl>
+                </div>
+
+                <!-- Command 6 -->
+                <div class="cmd-block">
+                    <div class="cmd-header"><span class="cmd-title">COMMAND #6 — Pool Usage যাচাই</span><span class="badge badge-info">READ-ONLY</span></div>
+                    <dl>
+                        <dt>Vendor / OS / Version:</dt><dd>MikroTik RouterOS v6 + v7</dd>
+                        <dt>Command:</dt><dd><code>/ip pool used print</code></dd>
+                        <dt>Purpose:</dt><dd>কোন pool-এর কোন address কে ব্যবহার করছে দেখা</dd>
+                        <dt>When to use:</dt><dd>Pool exhaustion সন্দেহ হলে</dd>
+                        <dt>Mode / Menu:</dt><dd><code>/ip pool used</code></dd>
+                        <dt>Parameters:</dt><dd>owner, info, pool</dd>
+                        <dt>Example:</dt><dd><code>/ip pool used print where pool=dhcp_pool1</code></dd>
+                        <dt>Expected key fields / result:</dt><dd>প্রতিটি ব্যবহৃত address এবং owner (DHCP MAC)</dd>
+                        <dt>Related commands:</dt><dd><code>/ip pool print</code></dd>
+                        <dt>Troubleshooting interpretation:</dt><dd>সব address used কিন্তু lease কম → stale lease থাকতে পারে, <code>lease print</code> দেখুন</dd>
+                        <dt>Risk / Caveat:</dt><dd>কিছু নেই</dd>
+                        <dt>Badges:</dt><dd><span class="badge badge-info">READ-ONLY</span></dd>
+                    </dl>
+                </div>
+            </section>
+
+            <!-- 13. Safety -->
+            <section id="safety" class="content-section" data-category="config">
+                <h2>১৩. কনফিগারেশন সেফটি + ব্যাকআপ + রোলব্যাক</h2>
+                <pre><code># ব্যাকআপ
+/system backup save name=before-dhcp-change
+/export file=before-dhcp-change
+
+# রোলব্যাক: DHCP server disable
+/ip dhcp-server disable dhcp1
+
+# Lease script remove
+/ip dhcp-server set dhcp1 lease-script=""
+
+# Static lease remove
+/ip dhcp-server lease remove [find comment~"temp"]</code></pre>
+                <div class="callout warn"><strong>সতর্কতা:</strong> প্রোডাকশনে DHCP server disable করলে নতুন client IP পাবে না, তবে existing lease expire পর্যন্ত কাজ করবে।</div>
+            </section>
+
+            <!-- 14. Verification -->
+            <section id="verification" class="content-section" data-category="verify">
+                <h2>১৪. ভেরিফিকেশন ফ্রেমওয়ার্ক</h2>
+                <table>
+                    <tr><th>কী যাচাই করবেন</th><th>কমান্ড</th><th>প্রত্যাশিত ফল</th></tr>
+                    <tr><td>Server active</td><td><code>/ip dhcp-server print</code></td><td><code>disabled=no</code>, interface সঠিক</td></tr>
+                    <tr><td>Lease bound</td><td><code>/ip dhcp-server lease print where status=bound</code></td><td>কমপক্ষে একটি bound lease</td></tr>
+                    <tr><td>Pool free</td><td><code>/ip pool used print</code></td><td>Pool range-এর বাইরে নয়</td></tr>
+                    <tr><td>Network config</td><td><code>/ip dhcp-server network print</code></td><td>gateway, dns-server সঠিক</td></tr>
+                    <tr><td>Relay (যদি থাকে)</td><td><code>/ip dhcp-relay print</code></td><td>interface ও server IP সঠিক</td></tr>
+                    <tr><td>Log</td><td><code>/log print where topics~"dhcp"</code></td><td>Lease assign/release event</td></tr>
+                </table>
+            </section>
+
+            <!-- 15. Monitoring -->
+            <section id="monitoring" class="content-section" data-category="verify">
+                <h2>১৫. মনিটরিং, স্ট্যাটিস্টিক্স, লগ</h2>
+                <pre><code># DHCP log (real-time)
+/log print follow where topics~"dhcp"
+
+# Lease script event variables (script-এ)
+# $leaseBound, $leaseActIP, $leaseActMAC, $leaseServerName
+
+# Log topic: dhcp [citation:10]
+# Info: lease assign/release
+# Debug: detailed packet info (যদি logging rule থাকে)</code></pre>
+                <p>ISP/NOC-এ log centralization (syslog) করে DHCP event monitor করা উচিত। MikroTik-এ <code>/system logging add topics=dhcp action=remote</code> দিয়ে remote syslog-এ পাঠানো যায়।</p>
+            </section>
+
+            <!-- 16. Flow -->
+            <section id="flow" class="content-section" data-category="concept">
+                <h2>১৬. প্যাকেট / স্টেট ফ্লো</h2>
+                <pre><code>Client (0.0.0.0:68) --DHCP Discover broadcast--> Server (UDP 67)
+Server --DHCP Offer--> Client
+Client --DHCP Request broadcast--> Server
+Server --DHCP Ack--> Client (lease bound)
+
+Relay: Client broadcast → Relay (Option 82 insert) → Unicast to Server → Server → Relay → Client</code></pre>
+                <p>DHCP packet-এ <code>secs</code> field এবং relay <code>delay-threshold</code> ব্যবহার করে slow client filter করা যায়। Option 82 relay information-এ circuit-id (interface MAC) এবং remote-id (client MAC বা custom string) থাকে [citation:5]。</p>
+            </section>
+
+            <!-- 17. Security -->
+            <section id="security" class="content-section" data-category="security">
+                <h2>১৭. সিকিউরিটি</h2>
+                <ul>
+                    <li><strong>Authoritative mode:</strong> enable করলে ভুল request-এ DHCPNAK পাঠায়, rogue server দ্রুত detect হয়</li>
+                    <li><strong>Static-only:</strong> শুধু known MAC-কে lease দিতে, unknown block</li>
+                    <li><strong>Option 82:</strong> relay port/subscriber identity verify</li>
+                    <li><strong>DHCP Snooping:</strong> access switch-এ rogue DHCP server block (MikroTik-এ built-in snooping নেই, switch feature)</li>
+                    <li><strong>Rate limit:</strong> per-lease bandwidth control</li>
+                    <li><strong>RADIUS:</strong> centralized authorization, MAC-based access control</li>
+                </ul>
+                <div class="callout noc"><strong>NOC টিপ:</strong> ISP-তে subscriber MAC spoofing রোধে RADIUS + Option 82 + static lease combination ব্যবহার করা হয়।</div>
+            </section>
+
+            <!-- 18. Performance -->
+            <section id="performance" class="content-section" data-category="concept">
+                <h2>১৮. পারফরম্যান্স ও ক্যাপাসিটি</h2>
+                <ul>
+                    <li>Lease storage: ডিফল্টে প্রতি ৫ মিনিটে disk-এ save হয় (flash wear কমাতে) [citation:6]। <code>/ip dhcp-server config</code>-এ <code>store-leases-disk</code> পরিবর্তন করা যায়।</li>
+                    <li>প্রচুর static lease থাকলে startup time বাড়তে পারে।</li>
+                    <li>Lease script heavy হলে DHCP response slow হতে পারে।</li>
+                    <li>Rate limit queue FastTracked traffic-এ কাজ করে না [citation:6]।</li>
+                    <li>ARP probe testing step (0.5s) dynamic lease assign-এ একটু দেরি করে।</li>
+                </ul>
+            </section>
+
+            <!-- 19. Troubleshooting -->
+            <section id="troubleshooting" class="content-section" data-category="troubleshoot">
+                <h2>১৯. ট্রাবলশুটিং ওয়ার্কফ্লো + ডিসিশন ট্রি</h2>
+                <pre><code>Client IP পাচ্ছে না?
+├── Server active? → /ip dhcp-server print
+├── Interface-এ IP আছে? → /ip address print
+├── Pool-এ free address আছে? → /ip pool used print
+├── Relay ব্যবহৃত হচ্ছে? → /ip dhcp-relay print (দুই পাশে)
+├── Firewall UDP 67/68 allow? → /ip firewall filter print
+├── Lease status testing/busy? → /ip dhcp-server lease print
+└── Log-এ কী আছে? → /log print where topics~"dhcp"</code></pre>
+                <h3>সাধারণ সমস্যা</h3>
+                <ul>
+                    <li><strong>Pool exhausted:</strong> <code>/ip pool used print</code>-এ সব ব্যবহৃত; lease time কমান বা pool বাড়ান</li>
+                    <li><strong>Address conflict:</strong> lease <code>busy</code>/<code>testing</code>-এ আটকে; <code>/ip dhcp-server lease check</code> বা manual remove</li>
+                    <li><strong>Relay fail:</strong> server-side route নেই, firewall block, বা local-address ভুল</li>
+                    <li><strong>Static lease কাজ করছে না:</strong> MAC mismatch, server name mismatch, বা lease dynamic হিসেবে থেকে গেছে</li>
+                    <li><strong>Script error:</strong> script topic-এ log; variable syntax (hyphen-যুক্ত variable-এ <code>$"lease-hostname"</code>) [citation:15]</li>
+                </ul>
+            </section>
+
+            <!-- 20. RCA -->
+            <section id="rca" class="content-section" data-category="troubleshoot">
+                <h2>২০. Root Cause Analysis টেবিল</h2>
+                <table>
+                    <tr><th>Symptom</th><th>Possible Cause</th><th>Verification</th><th>Fix</th></tr>
+                    <tr><td>Lease bound হচ্ছে না</td><td>Pool-এ free address নেই</td><td><code>/ip pool used print</code></td><td>Pool expand বা lease time কমান</td></tr>
+                    <tr><td>Lease <code>testing</code>-এ আটকে</td><td>ARP probe-এ conflict detect</td><td><code>/ip dhcp-server lease print</code></td><td>Conflict address remove, client check</td></tr>
+                    <tr><td>Relay client IP পাচ্ছে না</td><td>Server-এ return route নেই</td><td>Server-এ <code>/ip route print</code></td><td>Static route add</td></tr>
+                    <tr><td>Static lease ignore হচ্ছে</td><td>MAC mismatch / server wrong</td><td><code>lease print detail</code></td><td>MAC ও server name verify</td></tr>
+                    <tr><td>Rate limit কাজ করছে না</td><td>Lease dynamic / FastTrack active</td><td><code>lease print</code>, firewall</td><td>Static করুন, FastTrack bypass</td></tr>
+                </table>
+            </section>
+
+            <!-- 21. Failure Simulations -->
+            <section id="failure-sim" class="content-section" data-category="troubleshoot">
+                <h2>২১. ফেইলিওর সিমুলেশন (≥৫)</h2>
+                <h3>সিমুলেশন ১: Pool Exhaustion</h3>
+                <p><strong>Steps:</strong> ছোট pool তৈরি করুন (2 address), 3 client থেকে request দিন। <strong>Expected:</strong> তৃতীয় client timeout। <strong>Verify:</strong> <code>/ip pool used print</code> → 2 used। <strong>Fix:</strong> Pool বাড়ান বা lease time কমিয়ে recycle করুন।</p>
+                <h3>সিমুলেশন ২: Address Conflict (testing stuck)</h3>
+                <p><strong>Steps:</strong> একটি client-কে static IP দিন যা অন্য ডিভাইস already ব্যবহার করছে। Dynamic client ওই IP চাইলে <code>testing</code>-এ আটকে যাবে [citation:11]। <strong>Verify:</strong> <code>lease print where status=testing</code>। <strong>Fix:</strong> conflicting device সরান বা static lease adjust করুন।</p>
+                <h3>সিমুলেশন ৩: Relay Failure</h3>
+                <p><strong>Steps:</strong> Relay router-এ <code>dhcp-server</code> IP ভুল দিন। <strong>Expected:</strong> client থেকে Discover যাবে কিন্তু Offer ফিরবে না। <strong>Verify:</strong> Relay-এ <code>/log print where topics~"dhcp"</code>; server-এ কোনো request পৌঁছায়নি। <strong>Fix:</strong> সঠিক server IP, route, firewall।</p>
+                <h3>সিমুলেশন ৪: Static Lease Not Matching</h3>
+                <p><strong>Steps:</strong> Static lease MAC-এ একটি digit ভুল দিন। Client dynamic IP পাবে। <strong>Verify:</strong> <code>lease print</code>-এ static entry inactive। <strong>Fix:</strong> MAC correct করুন।</p>
+                <h3>সিমুলেশন ৫: Lease Script Error</h3>
+                <p><strong>Steps:</strong> Script-এ undefined variable ব্যবহার করুন (যেমন <code>$nonexistent</code>)। <strong>Expected:</strong> Script fail, lease assign হবে কিন্তু log-এ error। <strong>Verify:</strong> <code>/log print where topics~"script"</code> [citation:15]। <strong>Fix:</strong> Script debug করুন।</p>
+                <h3>সিমুলেশন ৬: RADIUS Timeout</h3>
+                <p><strong>Steps:</strong> RADIUS server unreachable করুন, <code>use-radius=yes</code> সহ DHCP server। <strong>Expected:</strong> Lease assign-এ delay বা fail। <strong>Verify:</strong> RADIUS log, <code>/radius monitor</code>। <strong>Fix:</strong> RADIUS connectivity restore বা fallback local pool।</p>
+            </section>
+
+            <!-- 22. Recovery -->
+            <section id="recovery" class="content-section" data-category="troubleshoot">
+                <h2>২২. রিকভারি প্রসিডিউর</h2>
+                <pre><code># Stuck leases clear (dynamic)
+/ip dhcp-server lease remove [find status=testing]
+/ip dhcp-server lease remove [find status=busy]
+
+# All dynamic leases clear (সতর্ক!)
+/ip dhcp-server lease remove [find dynamic=yes]
+
+# DHCP server re-enable
+/ip dhcp-server enable dhcp1
+
+# Config restore
+/system backup load name=before-dhcp-change</code></pre>
+            </section>
+
+            <!-- 23. Best Practices -->
+            <section id="best-practices" class="content-section" data-category="production">
+                <h2>২৩. বেস্ট প্র্যাকটিস ও ক্যাভিয়েট</h2>
+                <ul>
+                    <li><span class="badge badge-production">PRODUCTION</span> ISP-তে lease time ছোট রাখুন (১০-৩০ মিনিট) failover দ্রুত করতে</li>
+                    <li>Static lease comment-এ subscriber ID রাখুন</li>
+                    <li>Rate limit static lease-এ দিন, dynamic-এ script ব্যবহার করুন</li>
+                    <li>Relay ব্যবহার করলে দুই পাশে firewall UDP 67 allow করুন</li>
+                    <li>RADIUS থাকলে <code>use-radius=yes</code> এবং fallback plan রাখুন</li>
+                    <li>Lease script-এ heavy operation করবেন না</li>
+                    <li>Backup নিয়মিত নিন, বিশেষত bulk static lease change-এর আগে</li>
+                    <li>Log centralization (syslog) করুন</li>
+                    <li>Pool size subscriber সংখ্যার চেয়ে অন্তত ২০% বেশি রাখুন</li>
+                    <li>Option 82 ব্যবহার করলে switch-এ DHCP snooping enable করুন</li>
+                </ul>
+            </section>
+
+            <!-- 24. Production Config -->
+            <section id="production-config" class="content-section" data-category="production">
+                <h2>২৪. প্রোডাকশন কনফিগারেশন (ISP/NOC)</h2>
+                <pre><code># ISP Subscriber DHCP (VLAN-based)
+/ip pool add name=subs-pool ranges=100.64.0.10-100.64.255.254
+
+/ip dhcp-server network add address=100.64.0.0/16 gateway=100.64.0.1 dns-server=103.1.1.1,103.1.1.2
+
+/ip dhcp-server add name=subs-dhcp interface=vlan100 address-pool=subs-pool lease-time=30m authoritative=yes use-radius=yes disabled=no
+
+# RADIUS integration
+/radius add address=10.0.0.100 secret=StrongSecret service=dhcp
+
+# Static lease for critical subscriber
+/ip dhcp-server lease add address=100.64.0.50 mac-address=AA:BB:CC:DD:EE:FF server=subs-dhcp comment="CUST-001" rate-limit=50M/50M
+
+# Log to remote syslog
+/system logging add topics=dhcp action=remote
+/system logging add topics=script action=memory</code></pre>
+                <div class="callout prod"><strong>প্রোডাকশন টিপ:</strong> <code>authoritative=yes</code> দিলে rogue request দ্রুত reject হবে; RADIUS fail হলে local pool fallback রাখতে পারেন।</div>
+            </section>
+
+            <!-- 25. Scenario -->
+            <section id="scenario" class="content-section" data-category="production">
+                <h2>২৫. বাস্তব ISP/NOC সিনারিও</h2>
+                <p><strong>পরিস্থিতি:</strong> একটি ISP-র ৩টি POP, প্রতিটিতে access switch এবং একটি centralized MikroTik CCR DHCP server। Subscriber VLAN 100-105। প্রতিটি POP-এ DHCP relay। RADIUS দিয়ে authentication এবং rate-limit।</p>
+                <p><strong>সমস্যা:</strong> POP-2-এ কিছু subscriber IP পাচ্ছে না। <strong>Investigation:</strong> Relay router-এ <code>/ip dhcp-relay print</code> → server IP সঠিক। Server-এ <code>/ip dhcp-server lease print where server=pop2-dhcp</code> → কোনো lease নেই। <code>/log print where topics~"dhcp"</code> → relay থেকে কোনো request আসছে না। <strong>Root cause:</strong> POP-2 access switch-এ VLAN 102 trunk থেকে drop হচ্ছে। <strong>Fix:</strong> VLAN allow list correct করা।</p>
+            </section>
+
+            <!-- 26. Beginner Lab -->
+            <section id="lab-beginner" class="content-section" data-category="lab">
+                <h2>২৬. বিগিনার ল্যাব: বেসিক DHCP Server</h2>
+                <p><strong>Objective:</strong> একটি interface-এ DHCP Server চালু করে client-কে IP দেওয়া।</p>
+                <p><strong>Topology:</strong></p>
+                <pre><code>[MikroTik] ether1 (WAN) --- [Internet]
+            ether2 (LAN, 192.168.88.1/24) --- [Client PC]</code></pre>
+                <p><strong>Config:</strong></p>
+                <pre><code>/ip address add address=192.168.88.1/24 interface=ether2
+/ip pool add name=lab-pool ranges=192.168.88.100-192.168.88.150
+/ip dhcp-server network add address=192.168.88.0/24 gateway=192.168.88.1 dns-server=8.8.8.8
+/ip dhcp-server add name=lab-dhcp interface=ether2 address-pool=lab-pool lease-time=1h disabled=no</code></pre>
+                <p><strong>Verification:</strong> Client PC-তে <code>ipconfig /renew</code> (Windows) বা <code>dhclient</code> (Linux)। Router-এ <code>/ip dhcp-server lease print</code> → bound lease দেখা যাবে।</p>
+                <p><strong>Common mistake:</strong> interface-এ IP না দিয়ে DHCP server চালু করা। <strong>Checkpoint:</strong> Client ping করতে পারছে gateway-কে?</p>
+            </section>
+
+            <!-- 27. Intermediate Lab -->
+            <section id="lab-intermediate" class="content-section" data-category="lab">
+                <h2>২৭. ইন্টারমিডিয়েট ল্যাব: Static Lease + Rate Limit + Relay</h2>
+                <p><strong>Objective:</strong> নির্দিষ্ট MAC-কে fixed IP এবং bandwidth limit; অন্য subnet-এ relay।</p>
+                <p><strong>Topology:</strong></p>
+                <pre><code>[DHCP Server Router] --- [Relay Router] --- [Client Subnet 10.10.10.0/24]</code></pre>
+                <p><strong>DHCP Server Router:</strong></p>
+                <pre><code>/ip pool add name=relay-pool ranges=10.10.10.100-10.10.10.200
+/ip dhcp-server network add address=10.10.10.0/24 gateway=10.10.10.1 dns-server=8.8.8.8
+/ip dhcp-server add name=relay-dhcp interface=ether1 address-pool=relay-pool lease-time=30m disabled=no
+/ip dhcp-server lease add address=10.10.10.50 mac-address=AA:BB:CC:DD:EE:02 server=relay-dhcp rate-limit=5M/5M</code></pre>
+                <p><strong>Relay Router:</strong></p>
+                <pre><code>/ip address add address=10.10.10.1/24 interface=ether2
+/ip dhcp-relay add name=relay1 interface=ether2 dhcp-server=192.168.88.1 local-address=10.10.10.1 add-relay-info=yes</code></pre>
+                <p><strong>Verification:</strong> Client 10.10.10.50 পাবে (static match হলে), <code>/queue simple print</code>-এ dynamic queue। Relay-এ <code>/log print where topics~"dhcp"</code>।</p>
+            </section>
+
+            <!-- 28. Advanced Lab -->
+            <section id="lab-advanced" class="content-section" data-category="lab">
+                <h2>২৮. অ্যাডভান্সড ল্যাব: Lease Script + Address-List Automation</h2>
+                <p><strong>Objective:</strong> Lease assign হলেই client-এর IP firewall address-list-এ add হবে, release হলে remove হবে।</p>
+                <pre><code># Script তৈরি
+/system script add name=dhcp-addr-list source={
+  :if ($leaseBound = "1") do={
+    /ip firewall address-list add list=dhcp-clients address=$leaseActIP comment=$leaseActMAC timeout=1h
+  } else={
+    /ip firewall address-list remove [find list=dhcp-clients address=$leaseActIP]
+  }
+}
+
+# DHCP server-এ attach
+/ip dhcp-server set lab-dhcp lease-script=dhcp-addr-list
+
+# Firewall rule: শুধু dhcp-clients-কে forward allow
+/ip firewall filter add chain=forward src-address-list=dhcp-clients action=accept comment="Allow DHCP clients"
+/ip firewall filter add chain=forward action=drop comment="Drop others"</code></pre>
+                <p><strong>Verification:</strong> Client renew করলে <code>/ip firewall address-list print where list=dhcp-clients</code>-এ entry দেখা যাবে। Release/expire হলে entry চলে যাবে।</p>
+                <div class="callout warn"><strong>Caveat:</strong> Script timeout 1h দিলে lease time-এর সাথে match করতে হবে, নাহলে address-list stale হতে পারে।</div>
+            </section>
+
+            <!-- 29. Production Lab -->
+            <section id="lab-production" class="content-section" data-category="lab">
+                <h2>২৯. প্রোডাকশন / মাল্টি-ভেন্ডর ল্যাব: RADIUS + Relay + Static Fallback</h2>
+                <p><strong>Objective:</strong> ISP-style DHCP: RADIUS authorization, relay, static fallback।</p>
+                <p><strong>Setup:</strong> FreeRADIUS server (10.0.0.100), MikroTik DHCP server, relay router।</p>
+                <pre><code># RADIUS config
+/radius add address=10.0.0.100 secret=RadiusSecret service=dhcp
+
+# DHCP server with RADIUS
+/ip dhcp-server set subs-dhcp use-radius=yes radius-server=10.0.0.100
+
+# RADIUS-এ user (MAC-based): username = MAC address, password empty
+# FreeRADIUS users file:
+# AA:BB:CC:DD:EE:03  Cleartext-Password := ""
+#   Framed-IP-Address = 100.64.0.100,
+#   Rate-Limit = "20M/20M"</code></pre>
+                <p><strong>Verification:</strong> Client MAC RADIUS-এ থাকলে সেই IP ও rate-limit পাবে; না থাকলে local pool থেকে IP পাবে (fallback)। <code>/radius monitor 0</code> দিয়ে RADIUS stats দেখুন।</p>
+                <p><strong>Failure injection:</strong> RADIUS server বন্ধ করুন → client local pool থেকে IP পাবে, কিন্তু rate-limit missing।</p>
+            </section>
+
+            <!-- 30. Lab vs Production -->
+            <section id="lab-vs-prod" class="content-section" data-category="production">
+                <h2>৩০. ল্যাব vs প্রোডাকশন তুলনা</h2>
+                <table>
+                    <tr><th>দিক</th><th>ল্যাব</th><th>প্রোডাকশন (ISP/NOC)</th></tr>
+                    <tr><td>Lease time</td><td>১ ঘণ্টা বা বেশি</td><td>১০-৩০ মিনিট (failover)</td></tr>
+                    <tr><td>Pool size</td><td>ছোট</td><td>Subscriber + ২০% buffer</td></tr>
+                    <tr><td>RADIUS</td><td>Optional</td><td>প্রায় বাধ্যতামূলক</td></tr>
+                    <tr><td>Relay</td><td>ঐচ্ছিক</td><td>Multi-POP-এ বাধ্যতামূলক</td></tr>
+                    <tr><td>Logging</td><td>Local memory</td><td>Remote syslog + retention</td></tr>
+                    <tr><td>Script</td><td>Simple log</td><td>Address-list, queue, webhook</td></tr>
+                    <tr><td>Backup</td><td>মাঝে মাঝে</td><td>প্রতি change-এর আগে</td></tr>
+                    <tr><td>Security</td><td>Basic</td><td>Option 82, snooping, static-only</td></tr>
+                </table>
+            </section>
+
+            <!-- 31. Interview -->
+            <section id="interview" class="content-section" data-category="concept">
+                <h2>৩১. ইন্টারভিউ প্রশ্ন</h2>
+                <h3>Beginner (১০)</h3>
+                <ol>
+                    <li>DHCP-এর DORA process কী?</li>
+                    <li>MikroTik-এ DHCP server চালু করার ধাপগুলো কী?</li>
+                    <li>IP pool এবং DHCP network-এর মধ্যে সম্পর্ক কী?</li>
+                    <li>Static lease কীভাবে তৈরি করবেন?</li>
+                    <li>DHCP relay কখন দরকার?</li>
+                    <li>Lease time কম/বেশি হলে কী প্রভাব?</li>
+                    <li><code>testing</code> state মানে কী?</li>
+                    <li>কীভাবে DHCP log দেখবেন?</li>
+                    <li>Authoritative mode কী?</li>
+                    <li>DHCP server-এ DNS option কোথায় দেন?</li>
+                </ol>
+                <h3>Intermediate (১০)</h3>
+                <ol>
+                    <li>Option 82 কী এবং কেন ISP-তে গুরুত্বপূর্ণ?</li>
+                    <li>RADIUS-এর সাথে DHCP কীভাবে integrate করবেন?</li>
+                    <li>Rate limit static lease-এ কীভাবে দেবেন?</li>
+                    <li>Lease script-এ কোন variable পাওয়া যায়?</li>
+                    <li>Relay fail হলে কীভাবে troubleshoot করবেন?</li>
+                    <li>Pool exhaustion কীভাবে detect করবেন?</li>
+                    <li>Dynamic lease-কে static-এ কীভাবে convert করবেন?</li>
+                    <li>DHCP server v6 এবং v7-এ কী পার্থক্য?</li>
+                    <li><code>delay-threshold</code>-এর কাজ কী?</li>
+                    <li>কীভাবে DHCP client-কে specific gateway দেবেন?</li>
+                </ol>
+                <h3>Advanced / Production (১০)</h3>
+                <ol>
+                    <li>Multi-POP ISP-তে DHCP architecture কীভাবে design করবেন?</li>
+                    <li>RADIUS down হলে DHCP কীভাবে behave করবে?</li>
+                    <li>Lease script heavy হলে performance-এ কী প্রভাব?</li>
+                    <li>Option 82-এ circuit-id এবং remote-id-এর পার্থক্য?</li>
+                    <li>FastTrack active থাকলে rate-limit কাজ করে না কেন?</li>
+                    <li>কীভাবে DHCP lease data centralize করবেন?</li>
+                    <li>Rogue DHCP server detect ও mitigate কীভাবে?</li>
+                    <li>Lease time এবং ARP cache-এর সম্পর্ক?</li>
+                    <li>DHCP server-এ <code>store-leases-disk</code> কেন ৫ মিনিট?</li>
+                    <li>Production-এ DHCP change-এর rollback plan কী?</li>
+                </ol>
+                <h3>Production / RCA</h3>
+                <ol>
+                    <li>এক POP-এ সব subscriber IP পাচ্ছে না, কীভাবে approach করবেন?</li>
+                    <li>Lease <code>busy</code> state-এ আটকে থাকলে root cause কী হতে পারে?</li>
+                    <li>RADIUS accounting fail করলে lease কীভাবে প্রভাবিত হয়?</li>
+                    <li>DHCP server high CPU দেখলে কী করবেন?</li>
+                    <li>Relay-এ Option 82 missing হলে কীভাবে ধরবেন?</li>
+                </ol>
+            </section>
+
+            <!-- 32. Challenge -->
+            <section id="challenge" class="content-section" data-category="lab">
+                <h2>৩২. ফাইনাল চ্যালেঞ্জ</h2>
+                <p><strong>Scenario:</strong> একটি MikroTik DHCP server-এ ৩টি subnet-এর জন্য ৩টি DHCP instance আছে। একটি subnet-এর client-রা intermittently IP পাচ্ছে না। Server-এ lease <code>testing</code>-এ আটকে আছে।</p>
+                <p><strong>Tasks:</strong></p>
+                <ol>
+                    <li>কীভাবে determine করবেন কোন subnet-এ সমস্যা?</li>
+                    <li><code>testing</code> stuck lease-এর কারণ কী হতে পারে?</li>
+                    <li>ARP probe disable করা যায় কি? (ইঙ্গিত: static lease)</li>
+                    <li>Immediate fix এবং long-term fix কী?</li>
+                </ol>
+                <details>
+                    <summary style="cursor:pointer;color:var(--accent);">💡 সমাধান দেখুন</summary>
+                    <p><strong>১.</strong> <code>/ip dhcp-server lease print where status=testing</code> → কোন server-এর lease দেখুন। <code>/ip dhcp-server lease print detail</code>।</p>
+                    <p><strong>২.</strong> Address conflict: pool-এর একটি IP অন্য ডিভাইস static ব্যবহার করছে। অথবা ARP probe reply পাচ্ছে।</p>
+                    <p><strong>৩.</strong> Dynamic lease-এ ARP probe skip করা যায় না। Static lease-এ probe হয় না [citation:11]।</p>
+                    <p><strong>৪.</strong> Immediate: conflicting device সরান বা static lease adjust। Long-term: DHCP snooping, static lease for critical, pool exclude conflict range।</p>
+                </details>
+            </section>
+
+            <!-- 33. Cheat Sheet -->
+            <section id="cheatsheet" class="content-section" data-category="command">
+                <h2>৩৩. কুইক চিটশিট</h2>
+                <pre><code># Server তৈরি
+/ip pool add name=pool1 ranges=192.168.1.10-192.168.1.200
+/ip dhcp-server network add address=192.168.1.0/24 gateway=192.168.1.1 dns-server=8.8.8.8
+/ip dhcp-server add name=dhcp1 interface=bridge1 address-pool=pool1 lease-time=1h disabled=no
+
+# Lease দেখুন
+/ip dhcp-server lease print
+/ip dhcp-server lease print where status=bound
+
+# Static lease + rate limit
+/ip dhcp-server lease add address=192.168.1.50 mac-address=AA:BB:CC:DD:EE:FF server=dhcp1 rate-limit=10M/10M
+
+# Relay
+/ip dhcp-relay add name=relay1 interface=ether2 dhcp-server=10.0.0.1 local-address=10.0.0.2 add-relay-info=yes
+
+# Log
+/log print where topics~"dhcp"
+
+# Backup
+/system backup save name=dhcp-backup</code></pre>
+            </section>
+
+            <!-- 34. Checklist -->
+            <section id="checklist" class="content-section" data-category="verify">
+                <h2>৩৪. মাস্টার কমান্ড চেকলিস্ট</h2>
+                <table>
+                    <tr><th>✓</th><th>কমান্ড</th><th>কাজ</th></tr>
+                    <tr><td>☐</td><td><code>/ip pool print</code></td><td>Pool list ও range</td></tr>
+                    <tr><td>☐</td><td><code>/ip pool used print</code></td><td>ব্যবহৃত address</td></tr>
+                    <tr><td>☐</td><td><code>/ip dhcp-server print</code></td><td>Server status</td></tr>
+                    <tr><td>☐</td><td><code>/ip dhcp-server network print</code></td><td>Gateway/DNS config</td></tr>
+                    <tr><td>☐</td><td><code>/ip dhcp-server lease print</code></td><td>Lease state</td></tr>
+                    <tr><td>☐</td><td><code>/ip dhcp-relay print</code></td><td>Relay status</td></tr>
+                    <tr><td>☐</td><td><code>/log print where topics~"dhcp"</code></td><td>DHCP event log</td></tr>
+                    <tr><td>☐</td><td><code>/queue simple print where name~"dhcp-ds"</code></td><td>Rate limit queue</td></tr>
+                    <tr><td>☐</td><td><code>/radius monitor 0</code></td><td>RADIUS stats</td></tr>
+                    <tr><td>☐</td><td><code>/system backup save</code></td><td>Backup</td></tr>
+                </table>
+            </section>
+
+            <!-- 35. Audit -->
+            <section id="audit" class="content-section" data-category="concept">
+                <h2>৩৫. কমপ্লিটনেস অডিট</h2>
+                <ul>
+                    <li>✅ Concept Overview & Configuration (Section 1, 10, 11)</li>
+                    <li>✅ Vendor/OS-Specific Commands (Section 12)</li>
+                    <li>✅ Hands-on Labs: Beginner → Intermediate → Advanced → Production (Section 26-29)</li>
+                    <li>✅ Verification & Troubleshooting (Section 14, 19, 20)</li>
+                    <li>✅ Failure Simulations ≥5 (Section 21)</li>
+                    <li>✅ Best Practices, Caveats, Lab vs Production (Section 23, 30)</li>
+                    <li>✅ Learning Progression: ELI10 → Jargonize → Engineer (Section 5)</li>
+                    <li>✅ Interview Questions (Section 31)</li>
+                    <li>✅ Command Format with all fields (Section 12)</li>
+                    <li>✅ HTML: dark/light toggle, search, filters, copy buttons, responsive, print-friendly, offline</li>
+                    <li>✅ Language: Bangla explanation, English commands/terms</li>
+                    <li>✅ Version notes: v6 vs v7 differences noted</li>
+                </ul>
+                <p style="margin-top:16px;color:var(--text-secondary);font-size:0.9rem;"><em>এই হ্যান্ডবুকটি MikroTik RouterOS v6 + v7-এর DHCP Server-এর উপর ISP/NOC পরিবেশের জন্য প্রস্তুত। সকল কমান্ড MikroTik official documentation অনুসারে যাচাই করা হয়েছে।</em></p>
+            </section>
+        </main>
+    </div>
+
+    <!-- Back to Top -->
+    <button id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+    <script>
+        // Theme toggle
+        function toggleTheme() {
+            const body = document.body;
+            const btn = document.getElementById('themeToggle');
+            body.classList.toggle('dark');
+            const isDark = body.classList.contains('dark');
+            btn.textContent = isDark ? '☀️ লাইট' : '🌙 ডার্ক';
+            try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch(e) {}
+        }
+        // Load theme
+        try {
+            const saved = localStorage.getItem('theme');
+            if (saved === 'dark') {
+                document.body.classList.add('dark');
+                document.getElementById('themeToggle').textContent = '☀️ লাইট';
+            }
+        } catch(e) {}
+
+        // Copy buttons
+        document.querySelectorAll('pre').forEach(pre => {
+            const btn = document.createElement('button');
+            btn.className = 'copy-btn';
+            btn.textContent = '📋 কপি';
+            btn.onclick = function() {
+                const code = pre.querySelector('code') || pre;
+                const text = code.textContent;
+                navigator.clipboard.writeText(text).then(() => {
+                    btn.textContent = '✅ কপি হয়েছে';
+                    setTimeout(() => btn.textContent = '📋 কপি', 1500);
+                }).catch(() => {
+                    // Fallback
+                    const ta = document.createElement('textarea');
+                    ta.value = text;
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta);
+                    btn.textContent = '✅ কপি হয়েছে';
+                    setTimeout(() => btn.textContent = '📋 কপি', 1500);
+                });
+            };
+            pre.style.position = 'relative';
+            pre.appendChild(btn);
+        });
+
+        // Filter
+        let currentFilter = 'all';
+        function setFilter(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+            document.querySelector(`.chip[data-filter="${filter}"]`)?.classList.add('active');
+            filterContent();
+        }
+
+        function filterContent() {
+            const query = document.getElementById('searchBox').value.toLowerCase().trim();
+            document.querySelectorAll('.content-section').forEach(section => {
+                const category = section.dataset.category || '';
+                const text = section.textContent.toLowerCase();
+                const matchFilter = currentFilter === 'all' || category === currentFilter;
+                const matchSearch = !query || text.includes(query);
+                section.style.display = (matchFilter && matchSearch) ? '' : 'none';
+            });
+        }
+
+        // Back to top visibility
+        window.addEventListener('scroll', () => {
+            const btn = document.getElementById('backToTop');
+            btn.style.display = window.scrollY > 400 ? 'block' : 'none';
+        });
+
+        // Progress bar
+        window.addEventListener('scroll', () => {
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const progress = docHeight > 0 ? (window.scrollY / docHeight) * 100 : 0;
+            document.getElementById('progressFill').style.width = progress + '%';
+        });
+
+        // Keyboard: Escape clears search
+        document.getElementById('searchBox').addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                e.target.value = '';
+                filterContent();
+            }
+        });
+    </script>
+</body>
+</html>
