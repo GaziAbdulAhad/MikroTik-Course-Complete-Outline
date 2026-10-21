@@ -471,7 +471,7 @@
     <div class="nav-item">
       <button class="nav-btn" data-module="06">06 · DHCP Services <i class="fas fa-chevron-down"></i></button>
       <div class="dropdown">
-        <a href="DHCP-Server.html" data-part="DHCP Server">DHCP Server</a>
+        <a href="dhcp-server.html">DHCP Server</a>
         <a href="#" data-part="DHCP Client">DHCP Client</a>
         <a href="#" data-part="DHCP Relay">DHCP Relay</a>
         <a href="#" data-part="Static Lease">Static Lease</a>
@@ -945,21 +945,22 @@
     }
 
     // Attach event listeners to ALL dropdown links (parts)
-    const allPartLinks = document.querySelectorAll('.dropdown a[data-part]');
-    allPartLinks.forEach(link => {
-      link.addEventListener('click', (e) => {
-        e.preventDefault();  // Prevent page reload / hash jump
-        const partName = link.getAttribute('data-part');
-        if (partName) {
-          showPart(partName);
-        }
-        // Optionally close the dropdown (remove focus/hover state)
-        // Blur the active element to close dropdown on mobile if needed
-        if (document.activeElement) {
-          document.activeElement.blur();
-        }
-      });
-    });
+// ✅ নতুনটা — এটা বসাবেন
+const allPartLinks = document.querySelectorAll('.dropdown a[data-part]');
+allPartLinks.forEach(link => {
+  link.addEventListener('click', (e) => {
+    // If link has real href (not "#"), let browser navigate normally
+    const href = link.getAttribute('href');
+    if (href && href !== '#' && !href.startsWith('#')) {
+      return;  // Let the browser follow the link
+    }
+
+    e.preventDefault();
+    const partName = link.getAttribute('data-part');
+    if (partName) showPart(partName);
+    if (document.activeElement) document.activeElement.blur();
+  });
+});
 
     // Optional: add a small "active" visual feedback on nav buttons
     const navButtons = document.querySelectorAll('.nav-btn');
