@@ -1,0 +1,1607 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MikroTik WinBox ইনস্টলেশন — নেটওয়ার্ক ইঞ্জিনিয়ারিং হ্যান্ডবুক</title>
+  <style>
+    :root {
+      --bg: #0a0f1a;
+      --surface: #111827;
+      --surface-2: #1e293b;
+      --text: #e5e7eb;
+      --text-secondary: #9ca3af;
+      --accent: #14b8a6;
+      --accent-dim: #0f3d3a;
+      --border: #334155;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --success: #22c55e;
+      --info: #3b82f6;
+      --radius: 10px;
+      --shadow: 0 4px 24px rgba(0,0,0,0.4);
+      --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans Bengali', 'Hind Siliguri', sans-serif;
+      --font-mono: 'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+      --max-width: 1120px;
+    }
+    [data-theme="light"] {
+      --bg: #f1f5f9;
+      --surface: #ffffff;
+      --surface-2: #f8fafc;
+      --text: #0f172a;
+      --text-secondary: #475569;
+      --accent: #0d9488;
+      --accent-dim: #ccfbf1;
+      --border: #cbd5e1;
+      --shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.75;
+      font-size: 16px;
+      transition: background 0.3s, color 0.3s;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      * { transition-duration: 0.01ms !important; }
+    }
+    .top-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+    .header-inner {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .header-title {
+      font-size: 1.08rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .header-meta {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      font-size: 0.76rem;
+      color: var(--text-secondary);
+    }
+    .header-meta strong { color: var(--text); }
+    .header-controls { display: flex; gap: 8px; align-items: center; }
+    .theme-toggle, .expand-all, .collapse-all {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.78rem;
+      font-family: var(--font-sans);
+      white-space: nowrap;
+      transition: background 0.2s;
+    }
+    .theme-toggle:hover, .expand-all:hover, .collapse-all:hover { background: var(--border); }
+    .theme-toggle:focus-visible, .expand-all:focus-visible, .collapse-all:focus-visible,
+    .copy-btn:focus-visible, .filter-btn:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .toolbar {
+      max-width: var(--max-width);
+      margin: 18px auto 0;
+      padding: 0 24px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .search-box { flex: 1; min-width: 240px; position: relative; }
+    .search-box input {
+      width: 100%;
+      padding: 11px 16px 11px 42px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 0.9rem;
+      font-family: var(--font-sans);
+    }
+    .search-box input::placeholder { color: var(--text-secondary); }
+    .search-box input:focus { outline: none; border-color: var(--accent); }
+    .search-icon {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      color: var(--text-secondary); font-size: 1rem; pointer-events: none;
+    }
+    .filter-group { display: flex; gap: 5px; flex-wrap: wrap; }
+    .filter-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 7px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.72rem;
+      font-family: var(--font-sans);
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .filter-btn.active {
+      background: var(--accent);
+      color: #0a0f1a;
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+    .filter-btn:hover:not(.active) { border-color: var(--accent); color: var(--text); }
+    .progress-bar-container {
+      max-width: var(--max-width);
+      margin: 14px auto 0;
+      padding: 0 24px;
+    }
+    .progress-track {
+      height: 5px;
+      background: var(--surface-2);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      width: 0%;
+      border-radius: 3px;
+      transition: width 0.5s ease;
+    }
+    .progress-label {
+      font-size: 0.73rem;
+      color: var(--text-secondary);
+      margin-top: 5px;
+    }
+    .toc-container {
+      max-width: var(--max-width);
+      margin: 20px auto 0;
+      padding: 0 24px;
+    }
+    .toc-toggle {
+      display: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 16px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-family: var(--font-sans);
+      font-size: 0.88rem;
+      width: 100%;
+      text-align: left;
+    }
+    .toc-nav {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+    }
+    .toc-nav h3 {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+    }
+    .toc-list { list-style: none; columns: 2; column-gap: 24px; }
+    .toc-list li { margin-bottom: 5px; break-inside: avoid; }
+    .toc-list a {
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.82rem;
+      display: block;
+      padding: 3px 0 3px 8px;
+      border-left: 2px solid transparent;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .toc-list a:hover, .toc-list a.active { border-left-color: var(--accent); color: var(--accent); }
+    .main-content {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 24px 80px;
+    }
+    .section {
+      margin-top: 28px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      overflow: hidden;
+      transition: box-shadow 0.2s;
+    }
+    .section:hover { box-shadow: var(--shadow); }
+    .section-header {
+      padding: 15px 20px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.2s;
+    }
+    .section.open .section-header { border-bottom-color: var(--border); }
+    .section-header h2 {
+      font-size: 1.02rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .section-number {
+      background: var(--accent-dim);
+      color: var(--accent);
+      width: 26px; height: 26px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.76rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .section-toggle-icon {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      transition: transform 0.25s;
+      flex-shrink: 0;
+      margin-left: 12px;
+    }
+    .section.open .section-toggle-icon { transform: rotate(180deg); }
+    .section-body { display: none; padding: 20px; }
+    .section.open .section-body { display: block; }
+    .section-body h3 {
+      font-size: 0.95rem;
+      margin: 20px 0 8px;
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .section-body h3:first-child { margin-top: 0; }
+    .section-body h4 {
+      font-size: 0.88rem;
+      margin: 14px 0 6px;
+      color: var(--text);
+      font-weight: 600;
+    }
+    .section-body p { margin-bottom: 12px; color: var(--text); }
+    .section-body ul, .section-body ol { margin: 6px 0 14px 20px; color: var(--text); }
+    .section-body li { margin-bottom: 5px; }
+    .section-body a { color: var(--accent); }
+    .code-wrapper {
+      position: relative;
+      margin: 12px 0;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #050a12;
+      overflow: hidden;
+    }
+    .code-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 7px 14px;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+    }
+    .code-label {
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .copy-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 3px 11px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.68rem;
+      font-family: var(--font-sans);
+      transition: all 0.2s;
+    }
+    .copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+    .copy-btn.copied { color: var(--success); border-color: var(--success); }
+    .code-wrapper pre {
+      margin: 0;
+      padding: 13px 16px;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      line-height: 1.6;
+      color: #e2e8f0;
+      tab-size: 2;
+    }
+    .code-wrapper pre code { font-family: inherit; }
+    .code-wrapper.warning { border-color: var(--warning); }
+    .code-wrapper.warning .code-header { background: rgba(245,158,11,0.1); }
+    .code-wrapper.danger { border-color: var(--danger); }
+    .code-wrapper.danger .code-header { background: rgba(239,68,68,0.1); }
+    .table-wrap {
+      overflow-x: auto;
+      margin: 12px 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      min-width: 500px;
+    }
+    thead { background: var(--surface-2); }
+    th {
+      padding: 9px 13px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    td {
+      padding: 9px 13px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      vertical-align: top;
+    }
+    tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: var(--surface-2); }
+    .callout {
+      padding: 13px 17px;
+      border-radius: 8px;
+      margin: 12px 0;
+      border-left: 4px solid;
+      font-size: 0.86rem;
+    }
+    .callout.info { background: rgba(59,130,246,0.07); border-left-color: var(--info); }
+    .callout.warning { background: rgba(245,158,11,0.07); border-left-color: var(--warning); }
+    .callout.danger { background: rgba(239,68,68,0.07); border-left-color: var(--danger); }
+    .callout.success { background: rgba(34,197,94,0.07); border-left-color: var(--success); }
+    .callout.noc { background: rgba(139,92,246,0.07); border-left-color: #8b5cf6; }
+    .callout.production { background: rgba(236,72,153,0.07); border-left-color: #ec4899; }
+    .callout-label {
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.68rem;
+      letter-spacing: 0.05em;
+      display: block;
+      margin-bottom: 3px;
+    }
+    .callout.info .callout-label { color: var(--info); }
+    .callout.warning .callout-label { color: var(--warning); }
+    .callout.danger .callout-label { color: var(--danger); }
+    .callout.success .callout-label { color: var(--success); }
+    .callout.noc .callout-label { color: #8b5cf6; }
+    .callout.production .callout-label { color: #ec4899; }
+    .diagram {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 18px;
+      margin: 14px 0;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      line-height: 1.9;
+      overflow-x: auto;
+    }
+    .diagram .box {
+      display: inline-block;
+      padding: 5px 13px;
+      border: 2px solid var(--accent);
+      border-radius: 6px;
+      margin: 3px;
+      background: var(--surface);
+    }
+    .diagram .arrow { color: var(--text-secondary); margin: 0 5px; }
+    .diagram .label { color: var(--text-secondary); font-size: 0.7rem; }
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 0.66rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .badge.beginner { background: rgba(34,197,94,0.16); color: var(--success); }
+    .badge.intermediate { background: rgba(59,130,246,0.16); color: var(--info); }
+    .badge.advanced { background: rgba(245,158,11,0.16); color: var(--warning); }
+    .badge.expert { background: rgba(239,68,68,0.16); color: var(--danger); }
+    .checklist { list-style: none; margin: 6px 0 14px; padding: 0; }
+    .checklist li {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      padding: 5px 0;
+      font-size: 0.86rem;
+    }
+    .checklist input[type="checkbox"] {
+      margin-top: 4px;
+      width: 15px; height: 15px;
+      accent-color: var(--accent);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .checklist label { cursor: pointer; }
+    .back-to-top {
+      position: fixed;
+      bottom: 22px; right: 22px;
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #0a0f1a;
+      border: none;
+      cursor: pointer;
+      font-size: 1.1rem;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow);
+      z-index: 99;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .back-to-top.visible { display: flex; }
+    .back-to-top:hover { transform: scale(1.1); }
+    .no-results {
+      text-align: center;
+      padding: 36px 20px;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+    .no-results strong { color: var(--accent); }
+    .hidden { display: none !important; }
+    @media (max-width: 768px) {
+      .top-header { padding: 11px 16px; }
+      .header-inner { flex-direction: column; align-items: flex-start; }
+      .header-meta { font-size: 0.7rem; gap: 8px; }
+      .toolbar { padding: 0 16px; }
+      .toc-container { padding: 0 16px; }
+      .toc-toggle { display: block; }
+      .toc-nav { display: none; margin-top: 8px; }
+      .toc-nav.show { display: block; }
+      .toc-list { columns: 1; }
+      .main-content { padding: 0 16px 80px; }
+      .section-header { padding: 13px 15px; }
+      .section-body { padding: 15px; }
+      .section-header h2 { font-size: 0.9rem; }
+      .filter-group { width: 100%; }
+      .filter-btn { flex: 1; text-align: center; font-size: 0.68rem; padding: 6px 7px; }
+      .header-controls { width: 100%; }
+      .theme-toggle, .expand-all, .collapse-all { flex: 1; text-align: center; }
+    }
+    @media print {
+      .top-header, .toolbar, .progress-bar-container, .toc-container,
+      .back-to-top, .copy-btn, .section-toggle-icon, .theme-toggle,
+      .expand-all, .collapse-all, .filter-group, .search-box { display: none !important; }
+      .section { break-inside: avoid; border: 1px solid #ccc; }
+      .section-body { display: block !important; }
+      body { background: #fff; color: #000; }
+    }
+  </style>
+</head>
+<body data-theme="dark">
+
+<header class="top-header">
+  <div class="header-inner">
+    <div class="header-title">MikroTik WinBox Installation</div>
+    <div class="header-meta">
+      <span><strong>Vendor:</strong> MikroTik RouterOS</span>
+      <span><strong>Topic:</strong> WinBox Installation</span>
+      <span><strong>Version:</strong> v4.x (latest stable)</span>
+      <span><strong>Env:</strong> Windows / Linux (Wine) / macOS</span>
+      <span><strong>Depth:</strong> Beginner → Expert</span>
+    </div>
+    <div class="header-controls">
+      <button class="theme-toggle" id="themeToggle" aria-label="থিম পরিবর্তন করুন">🌙 Light Mode</button>
+      <button class="expand-all" id="expandAll">সব খুলুন</button>
+      <button class="collapse-all" id="collapseAll">সব বন্ধ করুন</button>
+    </div>
+  </div>
+</header>
+
+<div class="toolbar">
+  <div class="search-box">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="খুঁজুন... (WinBox, কমান্ড, Neighbors, troubleshooting)" autocomplete="off">
+  </div>
+  <div class="filter-group" id="filterGroup">
+    <button class="filter-btn active" data-filter="all">সব</button>
+    <button class="filter-btn" data-filter="concept">ধারণা</button>
+    <button class="filter-btn" data-filter="config">ইনস্টলেশন</button>
+    <button class="filter-btn" data-filter="command">কমান্ড</button>
+    <button class="filter-btn" data-filter="verify">যাচাই</button>
+    <button class="filter-btn" data-filter="troubleshoot">Troubleshooting</button>
+    <button class="filter-btn" data-filter="security">Security</button>
+    <button class="filter-btn" data-filter="lab">Lab</button>
+    <button class="filter-btn" data-filter="production">Production</button>
+  </div>
+</div>
+
+<div class="progress-bar-container">
+  <div class="progress-track">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+  <div class="progress-label" id="progressLabel">অগ্রগতি: 0% (০টি সেকশন দেখা হয়েছে)</div>
+</div>
+
+<div class="toc-container">
+  <button class="toc-toggle" id="tocToggle" aria-expanded="false">📑 সূচিপত্র দেখুন</button>
+  <nav class="toc-nav" id="tocNav">
+    <h3>সূচিপত্র</h3>
+    <ul class="toc-list" id="tocList">
+      <li><a href="#s1">১. ওভারভিউ ও স্কোপ</a></li>
+      <li><a href="#s2">২. পাঁচটি প্রধান স্তম্ভ</a></li>
+      <li><a href="#s3">৩. নলেজ ট্রি</a></li>
+      <li><a href="#s4">৪. আর্কিটেকচার ও টপোলজি</a></li>
+      <li><a href="#s5">৫. ELI10 ও ELI15</a></li>
+      <li><a href="#s6">৬. পরিভাষা</a></li>
+      <li><a href="#s7">৭. কেন ও কীভাবে</a></li>
+      <li><a href="#s8">৮. পূর্বশর্ত</a></li>
+      <li><a href="#s9">৯. ইন্টারফেস ম্যাপ</a></li>
+      <li><a href="#s10">১০. Windows-এ ইনস্টলেশন</a></li>
+      <li><a href="#s11">১১. Linux (Wine)-এ ইনস্টলেশন</a></li>
+      <li><a href="#s12">১২. macOS-এ ইনস্টলেশন</a></li>
+      <li><a href="#s13">১৩. প্রথম সংযোগ</a></li>
+      <li><a href="#s14">১৪. Neighbors ও MAC সংযোগ</a></li>
+      <li><a href="#s15">১৫. নিরাপদ কনফিগারেশন</a></li>
+      <li><a href="#s16">১৬. ভেরিফিকেশন</a></li>
+      <li><a href="#s17">১৭. Troubleshooting</a></li>
+      <li><a href="#s18">১৮. ডিসিশন ট্রি</a></li>
+      <li><a href="#s19">১৯. সিকিউরিটি</a></li>
+      <li><a href="#s20">২০. ফেইলিওর সিমুলেশন</a></li>
+      <li><a href="#s21">২১. বেস্ট প্র্যাকটিস</a></li>
+      <li><a href="#s22">২২. NOC সিনারিও</a></li>
+      <li><a href="#s23">২৩. বিগিনার ল্যাব</a></li>
+      <li><a href="#s24">২৪. ইন্টারমিডিয়েট ল্যাব</a></li>
+      <li><a href="#s25">২৫. অ্যাডভান্সড ল্যাব</a></li>
+      <li><a href="#s26">২৬. ইন্টারভিউ প্রশ্ন</a></li>
+      <li><a href="#s27">২৭. চ্যালেঞ্জ</a></li>
+      <li><a href="#s28">২৮. চিট শিট</a></li>
+      <li><a href="#s29">২৯. মাস্টার চেকলিস্ট</a></li>
+    </ul>
+  </nav>
+</div>
+
+<main class="main-content" id="mainContent">
+
+<section class="section open" id="s1" data-category="concept">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="true">
+    <h2><span class="section-number">১</span> ওভারভিউ ও স্কোপ</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <p><strong>WinBox</strong> হলো MikroTik RouterOS ম্যানেজ করার জন্য একটি ফাস্ট ও সিম্পল GUI ইউটিলিটি। এটি মূলত একটি নেটিভ Win32/Win64 বাইনারি, তবে Linux ও macOS-এ <strong>Wine</strong> এমুলেশন সফটওয়্যার দিয়ে চালানো যায় । WinBox দিয়ে আপনি RouterOS-এর প্রায় সব কনফিগারেশন GUI-তে করতে পারেন — IP অ্যাড্রেস, ফায়ারওয়াল, রাউটিং, কিউইউ, VPN ইত্যাদি।</p>
+
+    <h3>স্কোপ (Scope)</h3>
+    <ul>
+      <li><strong>অন্তর্ভুক্ত:</strong> Windows, Linux (Wine) ও macOS-এ WinBox ইনস্টলেশন, প্রথম সংযোগ, Neighbors ও MAC-ভিত্তিক সংযোগ, নিরাপদ কনফিগারেশন, Troubleshooting এবং বেস্ট প্র্যাকটিস।</li>
+      <li><strong>বাদ:</strong> RouterOS-এর ভেতরের বিস্তারিত রাউটিং প্রোটোকল কনফিগারেশন (BGP/OSPF), WebFig, SSH, API।</li>
+      <li><strong>ভার্সন:</strong> WinBox v4.x (সর্বশেষ stable)। WinBox v3-এর সাথে গুরুত্বপূর্ণ পার্থক্য থাকলে উল্লেখ করা হবে [citation:1]।</li>
+    </ul>
+
+    <div class="callout info">
+      <span class="callout-label">ℹ️ তথ্য</span>
+      WinBox v4 এখন Windows, macOS ও Linux-এর জন্য আলাদা নেটিভ বিল্ড সরবরাহ করে [citation:1]। Linux-এর জন্য নেটিভ বিল্ড থাকলেও, অনেক ব্যবহারকারী এখনও Wine-ভিত্তিক পুরনো পদ্ধতি ব্যবহার করেন। WinBox v4-এ macOS 12+ এবং Windows 10+ প্রয়োজন [citation:1]।
+    </div>
+  </div>
+</section>
+
+<section class="section open" id="s2" data-category="concept">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="true">
+    <h2><span class="section-number">২</span> পাঁচটি প্রধান স্তম্ভ (Five Priority Pillars)</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <ol>
+      <li><strong>ধারণা ও ইনস্টলেশন:</strong> WinBox কী, কেন GUI, এবং প্রতিটি OS-এ ধাপে ধাপে ইনস্টলেশন।</li>
+      <li><strong>কমান্ড ও ইন্টারফেস:</strong> WinBox GUI-এর প্রতিটি অংশ, Neighbors, MAC সংযোগ, এবং CLI-এর সাথে সম্পর্ক।</li>
+      <li><strong>হ্যান্ডস-অন ল্যাব:</strong> প্রথম সংযোগ, Neighbors ডিসকভারি, MAC WinBox, এবং নিরাপদ কনফিগারেশন।</li>
+      <li><strong>ভেরিফিকেশন ও Troubleshooting:</strong> সংযোগ যাচাই এবং সাধারণ সমস্যা সমাধান।</li>
+      <li><strong>বেস্ট প্র্যাকটিস ও সতর্কতা:</strong> নিরাপদ WinBox ব্যবহার, MAC সার্ভার সীমিত করা, এবং প্রোডাকশন সতর্কতা।</li>
+    </ol>
+  </div>
+</section>
+
+<section class="section" id="s3" data-category="concept">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">৩</span> নলেজ ট্রি</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <div class="diagram">
+      WinBox Installation<br>
+      ├── 1. Download<br>
+      │   ├── Windows (64-bit / ARM64)<br>
+      │   ├── Linux (64-bit native)<br>
+      │   └── macOS (Universal)<br>
+      ├── 2. Installation<br>
+      │   ├── Windows: Extract & Run<br>
+      │   ├── Linux: Extract & Run<br>
+      │   └── macOS: Mount DMG & Drag<br>
+      ├── 3. First Connection<br>
+      │   ├── IP Address<br>
+      │   ├── Neighbors (MNDP)<br>
+      │   └── MAC WinBox (Layer 2)<br>
+      ├── 4. Login<br>
+      │   ├── Username/Password<br>
+      │   └── Certificate Warning<br>
+      ├── 5. Interface Overview<br>
+      │   ├── Toolbar<br>
+      │   ├── Sidebar<br>
+      │   ├── Work Area<br>
+      │   └── Resources<br>
+      └── 6. Troubleshooting<br>
+          ├── Can't Connect<br>
+          ├── Neighbors Empty<br>
+          └── MAC Access Blocked
+    </div>
+  </div>
+</section>
+
+<section class="section" id="s4" data-category="concept">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">৪</span> আর্কিটেকচার ও টপোলজি</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>WinBox সংযোগের ধরন</h3>
+    <div class="diagram">
+      <span class="box">WinBox Client</span>
+      <span class="arrow">→</span>
+      <span class="box">RouterOS (IP: 192.168.88.1:8291)</span>
+      <br><br>
+      <span class="label">অথবা</span><br><br>
+      <span class="box">WinBox Client</span>
+      <span class="arrow">→ MAC (Layer 2) →</span>
+      <span class="box">RouterOS (MAC WinBox, UDP 20561)</span>
+    </div>
+
+    <h3>কম্পোনেন্ট</h3>
+    <ul>
+      <li><strong>WinBox Client:</strong> আপনার কম্পিউটারে চলা WinBox অ্যাপ্লিকেশন।</li>
+      <li><strong>RouterOS Device:</strong> MikroTik রাউটার (ফিজিক্যাল বা ভার্চুয়াল)।</li>
+      <li><strong>Management IP:</strong> রাউটারের IP ঠিকানা (TCP 8291)।</li>
+      <li><strong>MAC WinBox:</strong> IP ছাড়াই Layer 2-এ MAC অ্যাড্রেস দিয়ে সংযোগ (UDP 20561) [citation:5]।</li>
+    </ul>
+  </div>
+</section>
+
+<section class="section" id="s5" data-category="concept">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">৫</span> ELI10 ও ELI15</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>ELI10 (সহজ উপমা)</h3>
+    <p>ভাবুন, আপনার MikroTik রাউটার হলো একটি বড় কন্ট্রোল প্যানেল। CLI (কমান্ড লাইন) দিয়ে সেই প্যানেল চালাতে অনেক কমান্ড মুখস্থ করতে হয়। WinBox হলো সেই প্যানেলের একটি রিমোট কন্ট্রোল — যেখানে বাটন, ট্যাব আর মেনু আছে। আপনি মাউস দিয়ে ক্লিক করে সহজেই সব কনফিগার করতে পারেন। যেমন স্মার্টফোনে অ্যাপ দিয়ে ফোন সেটিংস বদলানো সহজ, তেমনি WinBox দিয়ে রাউটার সেটিংস বদলানো সহজ।</p>
+
+    <h3>ELI15 (প্রযুক্তিগত)</h3>
+    <p>WinBox একটি Win32/Win64 বাইনারি অ্যাপ্লিকেশন যা RouterOS-এর সাথে TCP 8291 পোর্টে (অথবা MAC WinBox-এর ক্ষেত্রে UDP 20561) যোগাযোগ করে [citation:5]। WinBox v4-এ একটি MDI (Multiple Document Interface) ইন্টারফেস আছে — বাম পাশে সাইডবার মেনু, মাঝে ওয়ার্ক এরিয়া, উপরে টুলবার এবং নিচে রিসোর্স বার [citation:2]। Neighbors ট্যাব MNDP (MikroTik Neighbor Discovery Protocol) ব্যবহার করে নেটওয়ার্কে থাকা MikroTik ডিভাইসগুলো খুঁজে বের করে, এমনকি IP কনফিগার না থাকলেও MAC অ্যাড্রেস দিয়ে সংযোগ করা যায় [citation:5]। WinBox v3.14 থেকে অ্যাপ্লিকেশনটি Extended Validation সার্টিফিকেট দিয়ে সাইন করা হয়, যা নিরাপত্তা নিশ্চিত করে ।</p>
+  </div>
+</section>
+
+<section class="section" id="s6" data-category="concept">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">৬</span> পরিভাষা (Terminology)</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Term</th><th>Full Form</th><th>অর্থ (Bangla)</th><th>উদ্দেশ্য</th></tr></thead>
+        <tbody>
+          <tr><td>WinBox</td><td>—</td><td>MikroTik-এর GUI ম্যানেজমেন্ট টুল</td><td>সহজে RouterOS কনফিগার করা</td></tr>
+          <tr><td>MNDP</td><td>MikroTik Neighbor Discovery Protocol</td><td>প্রতিবেশী ডিসকভারি প্রোটোকল</td><td>নেটওয়ার্কে MikroTik ডিভাইস খুঁজে বের করা</td></tr>
+          <tr><td>MAC WinBox</td><td>—</td><td>MAC অ্যাড্রেস দিয়ে WinBox সংযোগ</td><td>IP ছাড়াই Layer 2-এ সংযোগ</td></tr>
+          <tr><td>RoMON</td><td>Router Management Overlay Network</td><td>রাউটার ম্যানেজমেন্ট ওভারলে নেটওয়ার্ক</td><td>মাঝখানের রাউটারের মাধ্যমে সংযোগ</td></tr>
+          <tr><td>Wine</td><td>Wine Is Not an Emulator</td><td>Windows অ্যাপ্লিকেশন চালানোর কম্প্যাটিবিলিটি লেয়ার</td><td>Linux/macOS-এ WinBox চালানো</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="s7" data-category="concept">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">৭</span> কেন ও কীভাবে (WHY & HOW)</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>কেন WinBox?</h3>
+    <ul>
+      <li><strong>সহজ:</strong> CLI কমান্ড মুখস্থ না করেই সব কনফিগার করা যায়।</li>
+      <li><strong>দ্রুত:</strong> একই সাথে একাধিক উইন্ডো খুলে কাজ করা যায় (MDI)।</li>
+      <li><strong>Neighbors:</strong> নেটওয়ার্কে থাকা ডিভাইস স্বয়ংক্রিয়ভাবে খুঁজে পায়।</li>
+      <li><strong>MAC সংযোগ:</strong> IP কনফিগার না থাকলেও রাউটারে সংযোগ করা যায় — নতুন রাউটার সেটআপ বা রিকভারির জন্য অপরিহার্য [citation:5]।</li>
+      <li><strong>ক্রস-প্ল্যাটফর্ম:</strong> Windows, Linux, macOS-এ চলে।</li>
+    </ul>
+
+    <h3>কীভাবে কাজ করে?</h3>
+    <ol>
+      <li>WinBox অ্যাপ্লিকেশন চালু করা হয়।</li>
+      <li>Connect To ফিল্ডে রাউটারের IP অথবা MAC অ্যাড্রেস দেওয়া হয়।</li>
+      <li>Neighbors ট্যাব MNDP ব্রডকাস্টের মাধ্যমে নেটওয়ার্কের MikroTik ডিভাইসগুলো তালিকাভুক্ত করে।</li>
+      <li>লগইন করার পর WinBox রাউটারের সাথে সেশন স্থাপন করে।</li>
+      <li>প্রথমবার সংযোগে WinBox রাউটার থেকে প্লাগইন ডাউনলোড করে (কয়েক সেকেন্ড সময় লাগতে পারে)।</li>
+      <li>এরপর সাইডবার মেনু থেকে যেকোনো কনফিগারেশন করা যায়।</li>
+    </ol>
+  </div>
+</section>
+
+<section class="section" id="s8" data-category="concept">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">৮</span> পূর্বশর্ত (Prerequisites)</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>Windows</h3>
+    <ul>
+      <li>Windows 10 বা তার পরের সংস্করণ (64-bit) [citation:1]।</li>
+      <li>ইন্টারনেট সংযোগ (ডাউনলোডের জন্য)।</li>
+    </ul>
+
+    <h3>Linux</h3>
+    <ul>
+      <li>64-bit Linux ডিস্ট্রিবিউশন।</li>
+      <li>নেটিভ WinBox v4 অথবা Wine (পুরনো পদ্ধতি) [citation:1]।</li>
+    </ul>
+
+    <h3>macOS</h3>
+    <ul>
+      <li>macOS 12 (Monterey) বা তার পরের সংস্করণ [citation:1]।</li>
+    </ul>
+
+    <h3>নেটওয়ার্ক</h3>
+    <ul>
+      <li>রাউটারের IP অথবা MAC অ্যাড্রেস জানা থাকতে হবে।</li>
+      <li>TCP 8291 (IP WinBox) অথবা UDP 20561 (MAC WinBox) পোর্টে অ্যাক্সেস থাকতে হবে [citation:5]।</li>
+    </ul>
+  </div>
+</section>
+
+<section class="section" id="s9" data-category="command">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">৯</span> ইন্টারফেস ম্যাপ</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>WinBox v4 ইন্টারফেস</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>অংশ</th><th>অবস্থান</th><th>কাজ</th></tr></thead>
+        <tbody>
+          <tr><td>Toolbar</td><td>উপরে</td><td>সাধারণ নেভিগেশন বাটন</td></tr>
+          <tr><td>Sidebar</td><td>বাম পাশে</td><td>সব মেনু ও সাব-মেনুর তালিকা</td></tr>
+          <tr><td>Work Area</td><td>মাঝে</td><td>কনফিগারেশন উইন্ডো</td></tr>
+          <tr><td>Resources</td><td>নিচে</td><td>RouterOS ভার্সন, CPU, RAM তথ্য</td></tr>
+          <tr><td>Neighbors</td><td>Login স্ক্রিনে</td><td>নেটওয়ার্কের ডিভাইস তালিকা</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout info">
+      <span class="callout-label">ℹ️ তথ্য</span>
+      WinBox v4-এ Menu Search আছে — সাইডবারে মেনুর নামের অন্তত তিনটি অক্ষর টাইপ করলে মেনু খুঁজে পাওয়া যায় [citation:2]। Undo/Redo বাটন দিয়ে সর্বশেষ ১০০টি পরিবর্তন ফিরিয়ে আনা যায় [citation:2]।
+    </div>
+  </div>
+</section>
+
+<section class="section" id="s10" data-category="config">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">১০</span> Windows-এ ইনস্টলেশন</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>ধাপ ১: ডাউনলোড</h3>
+    <p>MikroTik-এর অফিসিয়াল ডাউনলোড পেজে যান এবং <strong>Windows (64-bit)</strong> নির্বাচন করুন [citation:1]।</p>
+
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">Download URL</span></div>
+      <pre><code>https://mikrotik.com/download/winbox/</code></pre>
+    </div>
+
+    <h3>ধাপ ২: এক্সট্রাক্ট</h3>
+    <p>ডাউনলোড করা <code>WinBox_Windows.zip</code> ফাইলটি ডান-ক্লিক করে <strong>Extract All</strong> নির্বাচন করুন [citation:7]।</p>
+
+    <h3>ধাপ ৩: চালু করুন</h3>
+    <p>এক্সট্রাক্ট করা ফোল্ডারে <code>WinBox.exe</code>-তে ডাবল-ক্লিক করুন। Windows SmartScreen সতর্কতা দেখালে <strong>Allow</strong> বা <strong>More info → Run anyway</strong> নির্বাচন করুন [citation:7]।</p>
+
+    <div class="callout info">
+      <span class="callout-label">ℹ️ তথ্য</span>
+      winget ব্যবহার করে ইনস্টল করতে চাইলে: <code>winget install -e --id Mikrotik.Winbox</code> [citation:12]।
+    </div>
+  </div>
+</section>
+
+<section class="section" id="s11" data-category="config">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">১১</span> Linux (Wine)-এ ইনস্টলেশন</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>পদ্ধতি ১: নেটিভ WinBox v4 (প্রস্তাবিত)</h3>
+    <p>WinBox v4-এ Linux-এর জন্য নেটিভ 64-bit বিল্ড আছে [citation:1]।</p>
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">Linux — Native WinBox</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+      <pre><code># ডাউনলোড করুন
+wget https://download.mikrotik.com/winbox/4.4/WinBox_Linux.zip
+
+# এক্সট্রাক্ট করুন
+unzip WinBox_Linux.zip
+
+# চালু করুন
+chmod +x WinBox
+./WinBox</code></pre>
+    </div>
+
+    <h3>পদ্ধতি ২: Wine দিয়ে পুরনো WinBox</h3>
+    <p>নেটিভ বিল্ড না থাকলে Wine ব্যবহার করা যায় ।</p>
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">Linux — Wine Installation</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+      <pre><code># Wine ইনস্টল করুন (Ubuntu/Debian)
+sudo apt update
+sudo apt install wine
+
+# Microsoft ফন্ট প্যাক ইনস্টল করুন (টেক্সট ডিস্টর্শন এড়াতে)
+sudo apt install ttf-mscorefonts-installer
+
+# WinBox.exe ডাউনলোড করে চালান
+wine WinBox.exe</code></pre>
+    </div>
+
+    <div class="callout warning">
+      <span class="callout-label">⚠️ সতর্কতা</span>
+      Wine-এ Microsoft ফন্ট প্যাক ইনস্টল না করলে WinBox-এর টেক্সট বিকৃত দেখাতে পারে [citation:8]।
+    </div>
+  </div>
+</section>
+
+<section class="section" id="s12" data-category="config">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">১২</span> macOS-এ ইনস্টলেশন</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>WinBox v4 (Universal)</h3>
+    <p>macOS 12+ এর জন্য নেটিভ WinBox v4 ডাউনলোড করুন [citation:1]।</p>
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">macOS — Native WinBox</span></div>
+      <pre><code>1. https://mikrotik.com/download/winbox/ থেকে WinBox.dmg ডাউনলোড করুন
+2. DMG ফাইল মাউন্ট করুন
+3. WinBox অ্যাপ্লিকেশন Applications ফোল্ডারে ড্র্যাগ করুন
+4. Applications থেকে WinBox চালু করুন</code></pre>
+    </div>
+
+    <h3>পুরনো পদ্ধতি (Wine + WinBox64)</h3>
+    <p>macOS 10.15 Catalina-তে 32-bit অ্যাপ সাপোর্ট বন্ধ হওয়ায় 64-bit Wine ও WinBox64.exe প্রয়োজন ।</p>
+    <div class="callout warning">
+      <span class="callout-label">⚠️ সতর্কতা</span>
+      WinBox v4 নেটিভ বিল্ড থাকায় macOS-এ Wine-এর প্রয়োজন নেই। শুধুমাত্র পুরনো সংস্করণের জন্য Wine ব্যবহার করুন।
+    </div>
+  </div>
+</section>
+
+<section class="section" id="s13" data-category="config">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">১৩</span> প্রথম সংযোগ</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>IP অ্যাড্রেস দিয়ে সংযোগ</h3>
+    <ol>
+      <li>WinBox চালু করুন।</li>
+      <li><strong>Connect To</strong> ফিল্ডে রাউটারের IP দিন (যেমন <code>192.168.88.1</code>)।</li>
+      <li><strong>Login</strong> ফিল্ডে ইউজারনেম দিন (ডিফল্ট <code>admin</code>)।</li>
+      <li><strong>Password</strong> ফিল্ডে পাসওয়ার্ড দিন (ডিফল্ট খালি)।</li>
+      <li><strong>Connect</strong> ক্লিক করুন।</li>
+    </ol>
+
+    <h3>Neighbors ট্যাব</h3>
+    <p>WinBox-এর Login স্ক্রিনে <strong>Neighbors</strong> ট্যাব থাকে। এটি MNDP ব্রডকাস্টের মাধ্যমে নেটওয়ার্কের MikroTik ডিভাইসগুলো তালিকাভুক্ত করে। তালিকা থেকে ডিভাইস নির্বাচন করে <strong>Connect</strong> ক্লিক করলেই সংযোগ হয়ে যায় [citation:5]।</p>
+
+    <div class="callout info">
+      <span class="callout-label">ℹ️ তথ্য</span>
+      প্রথমবার সংযোগে WinBox রাউটার থেকে প্লাগইন ডাউনলোড করে। এতে কয়েক সেকেন্ড সময় লাগতে পারে। এরপর সাইডবার মেনু সম্পূর্ণ দেখা যাবে।
+    </div>
+  </div>
+</section>
+
+<section class="section" id="s14" data-category="command">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">১৪</span> Neighbors ও MAC সংযোগ</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>MAC WinBox সংযোগ</h3>
+    <p>IP কনফিগার না থাকলে বা IP ভুলে গেলে MAC অ্যাড্রেস দিয়ে WinBox সংযোগ করা যায় [citation:5]।</p>
+    <ol>
+      <li>WinBox Login স্ক্রিনে <strong>Neighbors</strong> ট্যাব খুলুন।</li>
+      <li>তালিকায় ডিভাইসের MAC অ্যাড্রেস দেখাবে।</li>
+      <li>MAC অ্যাড্রেসে ক্লিক করে <strong>Connect</strong> করুন।</li>
+    </ol>
+
+    <h3>RouterOS-এ MAC সার্ভার কনফিগার</h3>
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">RouterOS v7 — MAC WinBox Settings</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+      <pre><code># MAC WinBox স্ট্যাটাস দেখুন
+/tool/mac-server/mac-winbox/print
+
+# শুধুমাত্র LAN ইন্টারফেসে MAC WinBox অনুমোদন করুন
+/tool/mac-server/mac-winbox/set allowed-interface-list=LAN</code></pre>
+    </div>
+
+    <div class="callout warning">
+      <span class="callout-label">⚠️ সতর্কতা</span>
+      MAC WinBox UDP 20561 পোর্ট ব্যবহার করে। IP ফায়ারওয়াল রুল এই ট্রাফিক ব্লক করে না — এটি Layer 2-এ কাজ করে [citation:5]। MAC অ্যাক্সেস সীমিত করতে <code>allowed-interface-list</code> অথবা bridge filter ব্যবহার করুন।
+    </div>
+  </div>
+</section>
+
+<section class="section" id="s15" data-category="security">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">১৫</span> নিরাপদ কনফিগারেশন</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>WinBox পোর্ট পরিবর্তন</h3>
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">RouterOS v7 — Change WinBox Port</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+      <pre><code># WinBox পোর্ট পরিবর্তন (ডিফল্ট 8291)
+/ip service set winbox port=8299</code></pre>
+    </div>
+
+    <h3>WinBox অ্যাক্সেস সীমিত</h3>
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">RouterOS v7 — Restrict WinBox to Management Subnet</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+      <pre><code>/ip service set winbox address=192.168.88.0/24</code></pre>
+    </div>
+
+    <h3>অপ্রয়োজনীয় সার্ভিস বন্ধ</h3>
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">RouterOS v7 — Disable Insecure Services</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+      <pre><code>/ip service disable telnet,ftp,www,api</code></pre>
+    </div>
+
+    <div class="callout noc">
+      <span class="callout-label">🛡️ NOC টিপ</span>
+      প্রোডাকশনে MAC WinBox শুধুমাত্র ট্রাস্টেড ইন্টারফেসে সীমিত রাখুন। <code>/tool/mac-server/mac-winbox/set allowed-interface-list=LAN</code> — ডিফল্টভাবে LAN লিস্টে শুধু LAN bridge থাকে [citation:5]।
+    </div>
+  </div>
+</section>
+
+<section class="section" id="s16" data-category="verify">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">১৬</span> ভেরিফিকেশন</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>চেক</th><th>পদ্ধতি</th><th>সুস্থ ফল</th><th>অসুস্থ ফল</th><th>পরবর্তী পদক্ষেপ</th></tr></thead>
+        <tbody>
+          <tr><td>WinBox চালু</td><td>অ্যাপ্লিকেশন আইকন</td><td>Login স্ক্রিন</td><td>ক্র্যাশ</td><td>রিইনস্টল</td></tr>
+          <tr><td>Neighbors</td><td>Neighbors ট্যাব</td><td>ডিভাইস তালিকাভুক্ত</td><td>খালি</td><td>MNDP/ফায়ারওয়াল চেক</td></tr>
+          <tr><td>IP সংযোগ</td><td>Connect</td><td>ড্যাশবোর্ড</td><td>Timeout</td><td>পোর্ট/ফায়ারওয়াল চেক</td></tr>
+          <tr><td>MAC সংযোগ</td><td>MAC-এ ক্লিক</td><td>ড্যাশবোর্ড</td><td>Timeout</td><td>MAC WinBox চেক</td></tr>
+          <tr><td>লগইন</td><td>admin/blank</td><td>মেইন ইন্টারফেস</td><td>ভুল পাসওয়ার্ড</td><td>পাসওয়ার্ড রিসেট</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="s17" data-category="troubleshoot">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">১৭</span> Troubleshooting</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>সাধারণ সমস্যা</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>লক্ষণ</th><th>সম্ভাব্য কারণ</th><th>প্রথম চেক</th><th>সমাধান</th></tr></thead>
+        <tbody>
+          <tr><td>Neighbors খালি</td><td>MNDP বন্ধ / ফায়ারওয়াল</td><td><code>/ip neighbor print</code></td><td>MNDP চালু, ফায়ারওয়াল চেক</td></tr>
+          <tr><td>IP সংযোগ Timeout</td><td>8291 পোর্ট ব্লকড</td><td><code>/ip service print</code></td><td>WinBox সার্ভিস চালু, ফায়ারওয়াল রুল</td></tr>
+          <tr><td>MAC সংযোগ Timeout</td><td>MAC WinBox বন্ধ</td><td><code>/tool/mac-server/mac-winbox/print</code></td><td>MAC WinBox চালু</td></tr>
+          <tr><td>ভুল পাসওয়ার্ড</td><td>পাসওয়ার্ড পরিবর্তিত</td><td>—</td><td>কনসোল/SSH দিয়ে রিসেট</td></tr>
+          <tr><td>Wine-এ টেক্সট বিকৃত</td><td>MS ফন্ট নেই</td><td>—</td><td><code>ttf-mscorefonts-installer</code> ইনস্টল</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout warning">
+      <span class="callout-label">⚠️ সতর্কতা</span>
+      WinBox সংযোগ না পেলে প্রথমে নিশ্চিত করুন রাউটার চালু আছে এবং আপনার কম্পিউটার একই নেটওয়ার্কে আছে (IP সংযোগের জন্য) অথবা একই Layer 2 সেগমেন্টে আছে (MAC সংযোগের জন্য)।
+    </div>
+  </div>
+</section>
+
+<section class="section" id="s18" data-category="troubleshoot">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">১৮</span> ডিসিশন ট্রি</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <div class="diagram">
+      WinBox Can't Connect<br>
+      ├── Neighbors খালি? <span class="arrow">→</span> Yes <span class="arrow">→</span> MNDP চালু? <span class="arrow">→</span> No <span class="arrow">→</span> /ip neighbor discovery-settings set discover-interface-list=all<br>
+      └── No<br>
+          ├── IP সংযোগ? <span class="arrow">→</span> Yes <span class="arrow">→</span> Port 8291 open? <span class="arrow">→</span> No <span class="arrow">→</span> /ip service enable winbox<br>
+          └── MAC সংযোগ? <span class="arrow">→</span> Yes <span class="arrow">→</span> MAC WinBox enabled? <span class="arrow">→</span> No <span class="arrow">→</span> /tool/mac-server/mac-winbox/set allowed-interface-list=LAN<br>
+          └── Login fail? <span class="arrow">→</span> Yes <span class="arrow">→</span> পাসওয়ার্ড রিসেট (কনসোল/SSH)
+    </div>
+  </div>
+</section>
+
+<section class="section" id="s19" data-category="security">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">১৯</span> সিকিউরিটি</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>WinBox সিকিউরিটি বেস্ট প্র্যাকটিস</h3>
+    <ul>
+      <li><strong>ডিফল্ট পোর্ট পরিবর্তন:</strong> 8291-এর বদলে কাস্টম পোর্ট ব্যবহার করুন।</li>
+      <li><strong>IP সীমিত:</strong> শুধুমাত্র ম্যানেজমেন্ট সাবনেট থেকে WinBox অ্যাক্সেস দিন।</li>
+      <li><strong>MAC WinBox সীমিত:</strong> শুধুমাত্র LAN ইন্টারফেসে অনুমোদন করুন।</li>
+      <li><strong>শক্তিশালী পাসওয়ার্ড:</strong> admin পাসওয়ার্ড অবশ্যই সেট করুন।</li>
+      <li><strong>সার্ভিস বন্ধ:</strong> অপ্রয়োজনীয় সার্ভিস (telnet, ftp, www) বন্ধ রাখুন।</li>
+      <li><strong>সার্টিফিকেট:</strong> WinBox v3.14+ EV সার্টিফিকেট দিয়ে সাইন করা — ডাউনলোডের সময় যাচাই করুন ।</li>
+    </ul>
+
+    <div class="callout danger">
+      <span class="callout-label">🚨 বিপদ</span>
+      MAC WinBox IP ফায়ারওয়াল দ্বারা সুরক্ষিত নয়। UDP 20561 পোর্ট ব্লক করার IP রুল MAC অ্যাক্সেস বন্ধ করে না [citation:5]। MAC অ্যাক্সেস সীমিত করতে <code>allowed-interface-list</code> অথবা bridge filter ব্যবহার করুন।
+    </div>
+  </div>
+</section>
+
+<section class="section" id="s20" data-category="troubleshoot">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">২০</span> ফেইলিওর সিমুলেশন</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>সিমুলেশন ১: Neighbors খালি</h3>
+    <p><strong>সিম্পটম:</strong> WinBox-এ কোনো ডিভাইস দেখা যাচ্ছে না।<br>
+    <strong>কারণ:</strong> MNDP বন্ধ অথবা ফায়ারওয়াল ব্রডকাস্ট ব্লক করছে।<br>
+    <strong>চেক:</strong> <code>/ip neighbor print</code><br>
+    <strong>ফিক্স:</strong> <code>/ip neighbor discovery-settings set discover-interface-list=all</code></p>
+
+    <h3>সিমুলেশন ২: IP WinBox Timeout</h3>
+    <p><strong>সিম্পটম:</strong> IP দিয়ে Connect করলে Timeout।<br>
+    <strong>কারণ:</strong> WinBox সার্ভিস বন্ধ অথবা 8291 ফায়ারওয়ালে ব্লকড।<br>
+    <strong>চেক:</strong> <code>/ip service print</code><br>
+    <strong>ফিক্স:</strong> <code>/ip service enable winbox</code> এবং ফায়ারওয়াল রুল চেক।</p>
+
+    <h3>সিমুলেশন ৩: MAC WinBox কাজ করে না</h3>
+    <p><strong>সিম্পটম:</strong> MAC দিয়ে Connect করলে Timeout।<br>
+    <strong>কারণ:</strong> MAC WinBox বন্ধ অথবা ইন্টারফেস লিস্টে নেই।<br>
+    <strong>চেক:</strong> <code>/tool/mac-server/mac-winbox/print</code><br>
+    <strong>ফিক্স:</strong> <code>/tool/mac-server/mac-winbox/set allowed-interface-list=LAN</code></p>
+
+    <h3>সিমুলেশন ৪: Wine-এ WinBox ক্র্যাশ</h3>
+    <p><strong>সিমপটম:</strong> Linux-এ Wine দিয়ে WinBox চালু হচ্ছে না।<br>
+    <strong>কারণ:</strong> Wine কনফিগারেশন সমস্যা অথবা 32/64-bit মিসম্যাচ।<br>
+    <strong>ফিক্স:</strong> নেটিভ WinBox v4 Linux বিল্ড ব্যবহার করুন [citation:1]।</p>
+
+    <h3>সিমুলেশন ৫: পাসওয়ার্ড ভুলে গেছেন</h3>
+    <p><strong>সিম্পটম:</strong> WinBox লগইন করতে পারছেন না।<br>
+    <strong>কারণ:</strong> পাসওয়ার্ড পরিবর্তিত হয়েছে।<br>
+    <strong>ফিক্স:</strong> রাউটারের কনসোলে (সিরিয়াল/VirtualBox/Proxmox) লগইন করে <code>/password</code> দিয়ে রিসেট করুন।</p>
+  </div>
+</section>
+
+<section class="section" id="s21" data-category="production">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">২১</span> বেস্ট প্র্যাকটিস</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>ল্যাব vs প্রোডাকশন</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>দিক</th><th>ল্যাব</th><th>প্রোডাকশন</th></tr></thead>
+        <tbody>
+          <tr><td>পাসওয়ার্ড</td><td>ডিফল্ট থাকতে পারে</td><td>শক্তিশালী পাসওয়ার্ড বাধ্যতামূলক</td></tr>
+          <tr><td>WinBox পোর্ট</td><td>ডিফল্ট 8291</td><td>কাস্টম পোর্ট</td></tr>
+          <tr><td>IP সীমা</td><td>সব IP</td><td>শুধু ম্যানেজমেন্ট সাবনেট</td></tr>
+          <tr><td>MAC WinBox</td><td>চালু</td><td>শুধু LAN-এ সীমিত</td></tr>
+          <tr><td>সার্ভিস</td><td>সব চালু</td><td>শুধু প্রয়োজনীয় সার্ভিস</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>মূল সুপারিশ</h3>
+    <ul>
+      <li>প্রথম দিনেই admin পাসওয়ার্ড সেট করুন।</li>
+      <li>WinBox পোর্ট পরিবর্তন করুন।</li>
+      <li>IP অ্যাক্সেস শুধু ম্যানেজমেন্ট সাবনেটে সীমিত করুন।</li>
+      <li>MAC WinBox শুধু LAN-এ অনুমোদন করুন।</li>
+      <li>অপ্রয়োজনীয় সার্ভিস বন্ধ রাখুন।</li>
+    </ul>
+  </div>
+</section>
+
+<section class="section" id="s22" data-category="production">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">২২</span> NOC সিনারিও</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <p><strong>সিনারিও:</strong> একটি NOC-এ নতুন MikroTik রাউটার ইনস্টল করা হয়েছে। টেকনিশিয়ান WinBox দিয়ে সংযোগ করতে পারছেন না।</p>
+    <p><strong>প্রথম চেক:</strong> WinBox Neighbors ট্যাব খালি।</p>
+    <p><strong>রুট কজ:</strong> রাউটারের <code>discover-interface-list</code> ডিফল্ট <code>LAN</code> এবং টেকনিশিয়ানের কম্পিউটার WAN পোর্টে সংযুক্ত।</p>
+    <p><strong>সমাধান:</strong> রাউটারের কনসোল থেকে <code>/ip neighbor discovery-settings set discover-interface-list=all</code> চালান, অথবা কম্পিউটার LAN পোর্টে সংযুক্ত করুন।</p>
+    <p><strong>প্রতিরোধ:</strong> নতুন রাউটার সেটআপের সময় LAN পোর্টে সংযোগ করুন এবং MAC WinBox দিয়ে প্রাথমিক কনফিগার করুন।</p>
+  </div>
+</section>
+
+<section class="section" id="s23" data-category="lab">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">২৩</span> বিগিনার ল্যাব</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <p><span class="badge beginner">Beginner</span></p>
+    <h3>উদ্দেশ্য</h3>
+    <p>Windows-এ WinBox ইনস্টল করে IP দিয়ে একটি MikroTik রাউটারে সংযোগ করা।</p>
+
+    <h3>টপোলজি</h3>
+    <div class="diagram">
+      <span class="box">Windows PC</span>
+      <span class="arrow">→</span>
+      <span class="box">RouterOS (192.168.88.1)</span>
+    </div>
+
+    <h3>ধাপ</h3>
+    <ol>
+      <li>MikroTik ডাউনলোড পেজ থেকে WinBox Windows বিল্ড ডাউনলোড করুন।</li>
+      <li>ZIP এক্সট্রাক্ট করুন।</li>
+      <li><code>WinBox.exe</code> চালান।</li>
+      <li>Connect To: <code>192.168.88.1</code></li>
+      <li>Login: <code>admin</code>, Password: (খালি)</li>
+      <li>Connect ক্লিক করুন।</li>
+      <li>ড্যাশবোর্ড দেখা গেলে সফল।</li>
+    </ol>
+
+    <h3>সফলতার মাপকাঠি</h3>
+    <ul class="checklist">
+      <li><input type="checkbox" id="lab1-1"><label for="lab1-1">WinBox চালু হয়েছে</label></li>
+      <li><input type="checkbox" id="lab1-2"><label for="lab1-2">Login স্ক্রিন দেখা যাচ্ছে</label></li>
+      <li><input type="checkbox" id="lab1-3"><label for="lab1-3">সংযোগ সফল</label></li>
+      <li><input type="checkbox" id="lab1-4"><label for="lab1-4">ড্যাশবোর্ড দেখা যাচ্ছে</label></li>
+    </ul>
+  </div>
+</section>
+
+<section class="section" id="s24" data-category="lab">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">২৪</span> ইন্টারমিডিয়েট ল্যাব</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <p><span class="badge intermediate">Intermediate</span></p>
+    <h3>উদ্দেশ্য</h3>
+    <p>Neighbors ট্যাব ব্যবহার করে MAC WinBox দিয়ে সংযোগ করা এবং WinBox পোর্ট পরিবর্তন করা।</p>
+
+    <h3>ধাপ</h3>
+    <ol>
+      <li>WinBox Login স্ক্রিনে Neighbors ট্যাব খুলুন।</li>
+      <li>রাউটারের MAC অ্যাড্রেসে ক্লিক করে Connect করুন।</li>
+      <li>সংযোগ成功后 WinBox পোর্ট পরিবর্তন করুন: <code>/ip service set winbox port=8299</code></li>
+      <li>IP দিয়ে নতুন পোর্টে (<code>192.168.88.1:8299</code>) সংযোগ করুন।</li>
+    </ol>
+
+    <h3>সফলতার মাপকাঠি</h3>
+    <ul class="checklist">
+      <li><input type="checkbox" id="lab2-1"><label for="lab2-1">MAC WinBox সংযোগ সফল</label></li>
+      <li><input type="checkbox" id="lab2-2"><label for="lab2-2">WinBox পোর্ট পরিবর্তিত</label></li>
+      <li><input type="checkbox" id="lab2-3"><label for="lab2-3">নতুন পোর্টে সংযোগ সফল</label></li>
+    </ul>
+  </div>
+</section>
+
+<section class="section" id="s25" data-category="lab">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">২৫</span> অ্যাডভান্সড ল্যাব</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <p><span class="badge advanced">Advanced</span></p>
+    <h3>উদ্দেশ্য</h3>
+    <p>WinBox অ্যাক্সেস শুধুমাত্র ম্যানেজমেন্ট সাবনেটে সীমিত করা এবং MAC WinBox শুধু LAN-এ অনুমোদন করা।</p>
+
+    <h3>ধাপ</h3>
+    <ol>
+      <li>WinBox পোর্ট পরিবর্তন করুন: <code>/ip service set winbox port=8299</code></li>
+      <li>IP সীমিত করুন: <code>/ip service set winbox address=192.168.88.0/24</code></li>
+      <li>MAC WinBox সীমিত করুন: <code>/tool/mac-server/mac-winbox/set allowed-interface-list=LAN</code></li>
+      <li>অপ্রয়োজনীয় সার্ভিস বন্ধ করুন: <code>/ip service disable telnet,ftp,www</code></li>
+      <li>ভিন্ন সাবনেট থেকে WinBox সংযোগ চেষ্টা করুন — ব্যর্থ হওয়া উচিত।</li>
+    </ol>
+
+    <h3>চ্যালেঞ্জ</h3>
+    <p>ম্যানেজমেন্ট সাবনেটের বাইরে থেকে MAC WinBox সংযোগ চেষ্টা করুন — সফল হলে কীভাবে ব্লক করবেন?</p>
+  </div>
+</section>
+
+<section class="section" id="s26" data-category="concept">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">২৬</span> ইন্টারভিউ প্রশ্ন</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>বিগিনার</h3>
+    <p><strong>প্রশ্ন ১:</strong> WinBox কী?<br>
+    <strong>উত্তর:</strong> MikroTik RouterOS ম্যানেজ করার GUI ইউটিলিটি।</p>
+    <p><strong>প্রশ্ন ২:</strong> WinBox-এর ডিফল্ট পোর্ট কত?<br>
+    <strong>উত্তর:</strong> TCP 8291।</p>
+    <p><strong>প্রশ্ন ৩:</strong> WinBox ডিফল্ট লগইন কী?<br>
+    <strong>উত্তর:</strong> admin, পাসওয়ার্ড খালি।</p>
+
+    <h3>ইন্টারমিডিয়েট</h3>
+    <p><strong>প্রশ্ন ৪:</strong> MAC WinBox কীভাবে কাজ করে?<br>
+    <strong>উত্তর:</strong> UDP 20561 পোর্টে MAC অ্যাড্রেস দিয়ে Layer 2-এ সংযোগ করে, IP কনফিগারেশন ছাড়াই [citation:5]।</p>
+    <p><strong>প্রশ্ন ৫:</strong> Neighbors ট্যাব কী দেখায়?<br>
+    <strong>উত্তর:</strong> MNDP ব্রডকাস্টের মাধ্যমে নেটওয়ার্কের MikroTik ডিভাইস তালিকা।</p>
+    <p><strong>প্রশ্ন ৬:</strong> Linux-এ WinBox চালানোর দুটি পদ্ধতি কী?<br>
+    <strong>উত্তর:</strong> নেটিভ WinBox v4 Linux বিল্ড অথবা Wine [citation:1]।</p>
+
+    <h3>অ্যাডভান্সড</h3>
+    <p><strong>প্রশ্ন ৭:</strong> MAC WinBox কি IP ফায়ারওয়াল দিয়ে ব্লক করা যায়?<br>
+    <strong>উত্তর:</strong> না, MAC WinBox Layer 2-এ কাজ করে। <code>allowed-interface-list</code> অথবা bridge filter দিয়ে সীমিত করতে হয় [citation:5]।</p>
+    <p><strong>প্রশ্ন ৮:</strong> WinBox v4-এ Undo/Redo কতটি পরিবর্তন মনে রাখে?<br>
+    <strong>উত্তর:</strong> সর্বোচ্চ ১০০টি [citation:2]।</p>
+    <p><strong>প্রশ্ন ৯:</strong> macOS-এ WinBox চালানোর জন্য কী প্রয়োজন?<br>
+    <strong>উত্তর:</strong> WinBox v4 নেটিভ বিল্ড (macOS 12+) অথবা পুরনো পদ্ধতিতে 64-bit Wine + WinBox64.exe [citation:1]।</p>
+  </div>
+</section>
+
+<section class="section" id="s27" data-category="lab">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">২৭</span> চ্যালেঞ্জ</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <p><strong>পরিস্থিতি:</strong> আপনাকে একটি নতুন MikroTik রাউটার সেটআপ করতে বলা হলো যেখানে:</p>
+    <ul>
+      <li>রাউটারের IP এখনও কনফিগার করা হয়নি।</li>
+      <li>আপনার কম্পিউটার LAN পোর্টে সংযুক্ত।</li>
+      <li>WinBox দিয়ে সংযোগ করে প্রাথমিক কনফিগার করতে হবে।</li>
+      <li>WinBox পোর্ট পরিবর্তন করতে হবে এবং IP অ্যাক্সেস সীমিত করতে হবে।</li>
+    </ul>
+
+    <details>
+      <summary style="cursor:pointer; color:var(--accent); font-weight:600;">💡 হিন্ট ১</summary>
+      <p>IP ছাড়া সংযোগের জন্য MAC WinBox ব্যবহার করুন — Neighbors ট্যাব থেকে MAC অ্যাড্রেসে ক্লিক করুন।</p>
+    </details>
+    <details>
+      <summary style="cursor:pointer; color:var(--accent); font-weight:600;">💡 হিন্ট ২</summary>
+      <p>WinBox পোর্ট: <code>/ip service set winbox port=8299</code></p>
+    </details>
+    <details>
+      <summary style="cursor:pointer; color:var(--accent); font-weight:600;">💡 হিন্ট ৩</summary>
+      <p>IP সীমা: <code>/ip service set winbox address=192.168.88.0/24</code></p>
+    </details>
+  </div>
+</section>
+
+<section class="section" id="s28" data-category="command">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">২৮</span> চিট শিট</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>কাজ</th><th>কমান্ড / অ্যাকশন</th><th>কখন</th></tr></thead>
+        <tbody>
+          <tr><td>WinBox ডাউনলোড</td><td><code>https://mikrotik.com/download/winbox/</code></td><td>ইনস্টলেশনের আগে</td></tr>
+          <tr><td>Windows-এ চালু</td><td><code>WinBox.exe</code></td><td>ইনস্টলেশনের পর</td></tr>
+          <tr><td>Linux-এ চালু (নেটিভ)</td><td><code>./WinBox</code></td><td>ইনস্টলেশনের পর</td></tr>
+          <tr><td>WinBox পোর্ট দেখুন</td><td><code>/ip service print</code></td><td>সংযোগ সমস্যায়</td></tr>
+          <tr><td>WinBox পোর্ট পরিবর্তন</td><td><code>/ip service set winbox port=8299</code></td><td>সিকিউরিটি</td></tr>
+          <tr><td>MAC WinBox দেখুন</td><td><code>/tool/mac-server/mac-winbox/print</code></td><td>MAC সংযোগ সমস্যায়</td></tr>
+          <tr><td>MAC WinBox সীমিত</td><td><code>/tool/mac-server/mac-winbox/set allowed-interface-list=LAN</code></td><td>সিকিউরিটি</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="s29" data-category="verify">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">২৯</span> মাস্টার চেকলিস্ট</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>ইনস্টলেশন</h3>
+    <ul class="checklist">
+      <li><input type="checkbox" id="mc-1"><label for="mc-1">WinBox ডাউনলোড সম্পন্ন</label></li>
+      <li><input type="checkbox" id="mc-2"><label for="mc-2">সঠিক OS বিল্ড নির্বাচন</label></li>
+      <li><input type="checkbox" id="mc-3"><label for="mc-3">অ্যাপ্লিকেশন চালু হয়েছে</label></li>
+    </ul>
+    <h3>সংযোগ</h3>
+    <ul class="checklist">
+      <li><input type="checkbox" id="mc-4"><label for="mc-4">Neighbors দেখা যাচ্ছে</label></li>
+      <li><input type="checkbox" id="mc-5"><label for="mc-5">IP সংযোগ সফল</label></li>
+      <li><input type="checkbox" id="mc-6"><label for="mc-6">MAC সংযোগ সফল</label></li>
+    </ul>
+    <h3>সিকিউরিটি</h3>
+    <ul class="checklist">
+      <li><input type="checkbox" id="mc-7"><label for="mc-7">admin পাসওয়ার্ড সেট</label></li>
+      <li><input type="checkbox" id="mc-8"><label for="mc-8">WinBox পোর্ট পরিবর্তিত</label></li>
+      <li><input type="checkbox" id="mc-9"><label for="mc-9">IP অ্যাক্সেস সীমিত</label></li>
+      <li><input type="checkbox" id="mc-10"><label for="mc-10">MAC WinBox LAN-এ সীমিত</label></li>
+      <li><input type="checkbox" id="mc-11"><label for="mc-11">অপ্রয়োজনীয় সার্ভিস বন্ধ</label></li>
+    </ul>
+
+    <div class="callout success">
+      <span class="callout-label">✅ অভিনন্দন</span>
+      আপনি WinBox ইনস্টলেশন ও নিরাপদ কনফিগারেশনের সম্পূর্ণ হ্যান্ডবুক শেষ করেছেন। পরবর্তী পদক্ষেপ: WinBox দিয়ে RouterOS ফায়ারওয়াল ও NAT কনফিগারেশন শিখুন।
+    </div>
+  </div>
+</section>
+
+</main>
+
+<button class="back-to-top" id="backToTop" aria-label="উপরে ফিরে যান">↑</button>
+
+<script>
+(function() {
+  'use strict';
+
+  var themeToggle = document.getElementById('themeToggle');
+  var body = document.body;
+
+  function setTheme(theme) {
+    body.setAttribute('data-theme', theme);
+    themeToggle.textContent = theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
+    try { localStorage.setItem('winbox-theme', theme); } catch(e) {}
+  }
+
+  try {
+    var saved = localStorage.getItem('winbox-theme');
+    if (saved) setTheme(saved);
+  } catch(e) {}
+
+  themeToggle.addEventListener('click', function() {
+    var current = body.getAttribute('data-theme');
+    setTheme(current === 'dark' ? 'light' : 'dark');
+  });
+
+  var sections = document.querySelectorAll('.section');
+
+  function toggleSection(section) {
+    var header = section.querySelector('.section-header');
+    var isOpen = section.classList.contains('open');
+    if (isOpen) {
+      section.classList.remove('open');
+      header.setAttribute('aria-expanded', 'false');
+    } else {
+      section.classList.add('open');
+      header.setAttribute('aria-expanded', 'true');
+    }
+    updateProgress();
+  }
+
+  sections.forEach(function(section) {
+    var header = section.querySelector('.section-header');
+    header.addEventListener('click', function() { toggleSection(section); });
+    header.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleSection(section);
+      }
+    });
+  });
+
+  document.getElementById('expandAll').addEventListener('click', function() {
+    sections.forEach(function(s) {
+      s.classList.add('open');
+      s.querySelector('.section-header').setAttribute('aria-expanded', 'true');
+    });
+    updateProgress();
+  });
+
+  document.getElementById('collapseAll').addEventListener('click', function() {
+    sections.forEach(function(s) {
+      s.classList.remove('open');
+      s.querySelector('.section-header').setAttribute('aria-expanded', 'false');
+    });
+    updateProgress();
+  });
+
+  function updateProgress() {
+    var total = sections.length;
+    var opened = document.querySelectorAll('.section.open').length;
+    var pct = total > 0 ? Math.round((opened / total) * 100) : 0;
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent =
+      'অগ্রগতি: ' + pct + '% (' + opened + 'টি সেকশন দেখা হয়েছে, মোট ' + total + 'টি)';
+  }
+
+  var searchInput = document.getElementById('searchInput');
+  var searchTimeout;
+
+  searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(function() { performSearch(); }, 250);
+  });
+
+  function performSearch() {
+    var query = searchInput.value.toLowerCase().trim();
+    var visibleCount = 0;
+
+    sections.forEach(function(section) {
+      var text = section.textContent.toLowerCase();
+      var matches = query === '' || text.indexOf(query) !== -1;
+      if (matches) {
+        section.classList.remove('hidden');
+        visibleCount++;
+        if (query !== '') {
+          section.classList.add('open');
+          section.querySelector('.section-header').setAttribute('aria-expanded', 'true');
+        }
+      } else {
+        section.classList.add('hidden');
+      }
+    });
+
+    var existing = document.querySelector('.no-results');
+    if (existing) existing.remove();
+
+    if (visibleCount === 0 && query !== '') {
+      var noResults = document.createElement('div');
+      noResults.className = 'no-results';
+      noResults.innerHTML = 'কোনো ফল পাওয়া যায়নি: "<strong>' + escapeHtml(query) + '</strong>"<br>অনুগ্রহ করে অন্য শব্দ দিয়ে চেষ্টা করুন।';
+      document.getElementById('mainContent').appendChild(noResults);
+    }
+
+    updateProgress();
+  }
+
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.appendChild(document.createTextNode(str));
+    return div.innerHTML;
+  }
+
+  var filterBtns = document.querySelectorAll('.filter-btn');
+  filterBtns.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      filterBtns.forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      var filter = btn.dataset.filter;
+
+      sections.forEach(function(section) {
+        var cats = (section.dataset.category || '').split(',');
+        if (filter === 'all' || cats.indexOf(filter) !== -1) {
+          section.classList.remove('hidden');
+        } else {
+          section.classList.add('hidden');
+        }
+      });
+
+      if (searchInput.value.trim() !== '') {
+        searchInput.value = '';
+        performSearch();
+      }
+    });
+  });
+
+  window.copyCode = function(btn) {
+    var wrapper = btn.closest('.code-wrapper');
+    var codeEl = wrapper.querySelector('pre code') || wrapper.querySelector('pre');
+    var text = codeEl.textContent;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function() {
+        btn.textContent = 'কপি হয়েছে ✓';
+        btn.classList.add('copied');
+        setTimeout(function() {
+          btn.textContent = 'কপি';
+          btn.classList.remove('copied');
+        }, 2000);
+      }).catch(function() { fallbackCopy(text, btn); });
+    } else {
+      fallbackCopy(text, btn);
+    }
+  };
+
+  function fallbackCopy(text, btn) {
+    try {
+      var textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      btn.textContent = 'কপি হয়েছে ✓';
+      btn.classList.add('copied');
+      setTimeout(function() {
+        btn.textContent = 'কপি';
+        btn.classList.remove('copied');
+      }, 2000);
+    } catch (err) {
+      btn.textContent = 'কপি ব্যর্থ';
+      setTimeout(function() { btn.textContent = 'কপি'; }, 2000);
+    }
+  }
+
+  var tocToggle = document.getElementById('tocToggle');
+  var tocNav = document.getElementById('tocNav');
+
+  tocToggle.addEventListener('click', function() {
+    var isVisible = tocNav.classList.contains('show');
+    tocNav.classList.toggle('show');
+    tocToggle.setAttribute('aria-expanded', String(!isVisible));
+    tocToggle.textContent = isVisible ? '📑 সূচিপত্র দেখুন' : '📑 সূচিপত্র লুকান';
+  });
+
+  var tocLinks = document.querySelectorAll('.toc-list a');
+
+  function highlightTOC() {
+    var scrollPos = window.scrollY + 100;
+    var activeId = '';
+
+    sections.forEach(function(section) {
+      if (section.offsetTop <= scrollPos && section.offsetTop + section.offsetHeight > scrollPos) {
+        activeId = section.id;
+      }
+    });
+
+    tocLinks.forEach(function(link) {
+      link.classList.remove('active');
+      if (link.getAttribute('href') === '#' + activeId) {
+        link.classList.add('active');
+      }
+    });
+  }
+
+  window.addEventListener('scroll', highlightTOC, { passive: true });
+
+  var backToTop = document.getElementById('backToTop');
+
+  window.addEventListener('scroll', function() {
+    if (window.scrollY > 400) {
+      backToTop.classList.add('visible');
+    } else {
+      backToTop.classList.remove('visible');
+    }
+  }, { passive: true });
+
+  backToTop.addEventListener('click', function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  updateProgress();
+  highlightTOC();
+
+})();
+</script>
+
+</body>
+</html>
