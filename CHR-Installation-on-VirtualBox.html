@@ -1,0 +1,2004 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MikroTik CHR VirtualBox Installation — Network Engineering Handbook</title>
+  <style>
+    /* ---------- DESIGN SYSTEM ---------- */
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-2: #334155;
+      --text: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --accent: #2dd4bf;
+      --accent-dim: #1a5c56;
+      --border: #475569;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --success: #22c55e;
+      --info: #3b82f6;
+      --radius: 10px;
+      --shadow: 0 4px 20px rgba(0,0,0,0.3);
+      --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans Bengali', 'Hind Siliguri', sans-serif;
+      --font-mono: 'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+      --max-width: 1100px;
+    }
+
+    [data-theme="light"] {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --surface-2: #f1f5f9;
+      --text: #0f172a;
+      --text-secondary: #475569;
+      --accent: #0d9488;
+      --accent-dim: #ccfbf1;
+      --border: #cbd5e1;
+      --shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      font-size: 16px;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      * { transition-duration: 0.01ms !important; }
+    }
+
+    /* ---------- HEADER ---------- */
+    .top-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .header-inner {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .header-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -0.01em;
+    }
+
+    .header-meta {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .header-meta span { white-space: nowrap; }
+    .header-meta strong { color: var(--text); }
+
+    .header-controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .theme-toggle, .expand-all, .collapse-all {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-family: var(--font-sans);
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+
+    .theme-toggle:hover, .expand-all:hover, .collapse-all:hover {
+      background: var(--border);
+    }
+
+    .theme-toggle:focus-visible, .expand-all:focus-visible, .collapse-all:focus-visible,
+    .copy-btn:focus-visible, .filter-btn:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* ---------- SEARCH + FILTERS ---------- */
+    .toolbar {
+      max-width: var(--max-width);
+      margin: 20px auto 0;
+      padding: 0 24px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .search-box {
+      flex: 1;
+      min-width: 240px;
+      position: relative;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 12px 16px 12px 44px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 0.95rem;
+      font-family: var(--font-sans);
+      transition: border-color 0.2s;
+    }
+
+    .search-box input::placeholder { color: var(--text-secondary); }
+    .search-box input:focus { outline: none; border-color: var(--accent); }
+
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+      pointer-events: none;
+    }
+
+    .filter-group {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 8px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.78rem;
+      font-family: var(--font-sans);
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .filter-btn.active {
+      background: var(--accent);
+      color: #0f172a;
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+
+    .filter-btn:hover:not(.active) { border-color: var(--accent); color: var(--text); }
+
+    /* ---------- PROGRESS ---------- */
+    .progress-bar-container {
+      max-width: var(--max-width);
+      margin: 16px auto 0;
+      padding: 0 24px;
+    }
+
+    .progress-track {
+      height: 6px;
+      background: var(--surface-2);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      width: 0%;
+      border-radius: 3px;
+      transition: width 0.5s ease;
+    }
+
+    .progress-label {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      margin-top: 6px;
+    }
+
+    /* ---------- TOC ---------- */
+    .toc-container {
+      max-width: var(--max-width);
+      margin: 24px auto 0;
+      padding: 0 24px;
+    }
+
+    .toc-toggle {
+      display: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 16px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+      width: 100%;
+      text-align: left;
+    }
+
+    .toc-nav {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+    }
+
+    .toc-nav h3 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+
+    .toc-list {
+      list-style: none;
+      columns: 2;
+      column-gap: 24px;
+    }
+
+    .toc-list li { margin-bottom: 6px; break-inside: avoid; }
+
+    .toc-list a {
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.86rem;
+      display: block;
+      padding: 3px 0;
+      border-left: 2px solid transparent;
+      padding-left: 8px;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .toc-list a:hover, .toc-list a.active {
+      border-left-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* ---------- MAIN CONTENT ---------- */
+    .main-content {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 24px 80px;
+    }
+
+    .section {
+      margin-top: 32px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      overflow: hidden;
+      transition: box-shadow 0.2s;
+    }
+
+    .section:hover { box-shadow: var(--shadow); }
+
+    .section-header {
+      padding: 16px 20px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.2s;
+    }
+
+    .section.open .section-header { border-bottom-color: var(--border); }
+
+    .section-header h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .section-number {
+      background: var(--accent-dim);
+      color: var(--accent);
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .section-toggle-icon {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      transition: transform 0.25s;
+      flex-shrink: 0;
+      margin-left: 12px;
+    }
+
+    .section.open .section-toggle-icon { transform: rotate(180deg); }
+
+    .section-body {
+      display: none;
+      padding: 20px;
+    }
+
+    .section.open .section-body { display: block; }
+
+    /* ---------- TYPOGRAPHY ---------- */
+    .section-body h3 {
+      font-size: 1rem;
+      margin: 20px 0 10px;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .section-body h3:first-child { margin-top: 0; }
+
+    .section-body h4 {
+      font-size: 0.92rem;
+      margin: 16px 0 8px;
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .section-body p {
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+
+    .section-body ul, .section-body ol {
+      margin: 8px 0 16px 20px;
+      color: var(--text);
+    }
+
+    .section-body li { margin-bottom: 6px; }
+
+    .section-body a { color: var(--accent); }
+
+    /* ---------- CODE BLOCKS ---------- */
+    .code-wrapper {
+      position: relative;
+      margin: 14px 0;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #0b1120;
+      overflow: hidden;
+    }
+
+    [data-theme="light"] .code-wrapper { background: #1e293b; }
+
+    .code-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 14px;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .code-label {
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .copy-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 4px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.72rem;
+      font-family: var(--font-sans);
+      transition: all 0.2s;
+    }
+
+    .copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+    .copy-btn.copied { color: var(--success); border-color: var(--success); }
+
+    .code-wrapper pre {
+      margin: 0;
+      padding: 14px 16px;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 0.84rem;
+      line-height: 1.6;
+      color: #e2e8f0;
+      tab-size: 2;
+    }
+
+    .code-wrapper pre code { font-family: inherit; }
+
+    .code-wrapper.warning { border-color: var(--warning); }
+    .code-wrapper.warning .code-header { background: rgba(245,158,11,0.15); }
+
+    .code-wrapper.danger { border-color: var(--danger); }
+    .code-wrapper.danger .code-header { background: rgba(239,68,68,0.15); }
+
+    /* ---------- TABLES ---------- */
+    .table-wrap {
+      overflow-x: auto;
+      margin: 14px 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.86rem;
+      min-width: 500px;
+    }
+
+    thead { background: var(--surface-2); }
+
+    th {
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      vertical-align: top;
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: var(--surface-2); }
+
+    /* ---------- CALLOUTS ---------- */
+    .callout {
+      padding: 14px 18px;
+      border-radius: 8px;
+      margin: 14px 0;
+      border-left: 4px solid;
+      font-size: 0.9rem;
+    }
+
+    .callout.info { background: rgba(59,130,246,0.1); border-left-color: var(--info); }
+    .callout.warning { background: rgba(245,158,11,0.1); border-left-color: var(--warning); }
+    .callout.danger { background: rgba(239,68,68,0.1); border-left-color: var(--danger); }
+    .callout.success { background: rgba(34,197,94,0.1); border-left-color: var(--success); }
+    .callout.noc { background: rgba(139,92,246,0.1); border-left-color: #8b5cf6; }
+    .callout.production { background: rgba(236,72,153,0.1); border-left-color: #ec4899; }
+
+    .callout-label {
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.72rem;
+      letter-spacing: 0.05em;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .callout.info .callout-label { color: var(--info); }
+    .callout.warning .callout-label { color: var(--warning); }
+    .callout.danger .callout-label { color: var(--danger); }
+    .callout.success .callout-label { color: var(--success); }
+    .callout.noc .callout-label { color: #8b5cf6; }
+    .callout.production .callout-label { color: #ec4899; }
+
+    /* ---------- DIAGRAM ---------- */
+    .diagram {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      margin: 16px 0;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      line-height: 1.8;
+      overflow-x: auto;
+    }
+
+    .diagram .box {
+      display: inline-block;
+      padding: 6px 14px;
+      border: 2px solid var(--accent);
+      border-radius: 6px;
+      margin: 4px;
+      background: var(--surface);
+    }
+
+    .diagram .arrow { color: var(--text-secondary); margin: 0 6px; }
+    .diagram .label { color: var(--text-secondary); font-size: 0.75rem; }
+
+    /* ---------- BADGES ---------- */
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .badge.beginner { background: rgba(34,197,94,0.2); color: var(--success); }
+    .badge.intermediate { background: rgba(59,130,246,0.2); color: var(--info); }
+    .badge.advanced { background: rgba(245,158,11,0.2); color: var(--warning); }
+    .badge.expert { background: rgba(239,68,68,0.2); color: var(--danger); }
+    .badge.production { background: rgba(236,72,153,0.2); color: #ec4899; }
+
+    /* ---------- CHECKLIST ---------- */
+    .checklist {
+      list-style: none;
+      margin: 8px 0 16px;
+      padding: 0;
+    }
+
+    .checklist li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 6px 0;
+      font-size: 0.9rem;
+    }
+
+    .checklist input[type="checkbox"] {
+      margin-top: 4px;
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .checklist label { cursor: pointer; }
+
+    /* ---------- BACK TO TOP ---------- */
+    .back-to-top {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #0f172a;
+      border: none;
+      cursor: pointer;
+      font-size: 1.2rem;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow);
+      z-index: 99;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+
+    .back-to-top.visible { display: flex; }
+    .back-to-top:hover { transform: scale(1.1); }
+
+    /* ---------- SEARCH NO RESULTS ---------- */
+    .no-results {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+
+    .no-results strong { color: var(--accent); }
+
+    /* ---------- UTILITY ---------- */
+    .hidden { display: none !important; }
+    .mt-0 { margin-top: 0; }
+    .mb-0 { margin-bottom: 0; }
+    .text-small { font-size: 0.82rem; color: var(--text-secondary); }
+
+    /* ---------- RESPONSIVE ---------- */
+    @media (max-width: 768px) {
+      .top-header { padding: 12px 16px; }
+      .header-inner { flex-direction: column; align-items: flex-start; }
+      .header-meta { font-size: 0.75rem; gap: 10px; }
+      .toolbar { padding: 0 16px; }
+      .toc-container { padding: 0 16px; }
+      .toc-toggle { display: block; }
+      .toc-nav { display: none; margin-top: 8px; }
+      .toc-nav.show { display: block; }
+      .toc-list { columns: 1; }
+      .main-content { padding: 0 16px 80px; }
+      .section-header { padding: 14px 16px; }
+      .section-body { padding: 16px; }
+      .section-header h2 { font-size: 0.95rem; }
+      .filter-group { width: 100%; }
+      .filter-btn { flex: 1; text-align: center; font-size: 0.72rem; padding: 6px 8px; }
+      .header-controls { width: 100%; }
+      .theme-toggle, .expand-all, .collapse-all { flex: 1; text-align: center; }
+    }
+
+    @media print {
+      .top-header, .toolbar, .progress-bar-container, .toc-container,
+      .back-to-top, .copy-btn, .section-toggle-icon, .theme-toggle,
+      .expand-all, .collapse-all, .filter-group, .search-box { display: none !important; }
+      .section { break-inside: avoid; border: 1px solid #ccc; }
+      .section-body { display: block !important; }
+      body { background: #fff; color: #000; }
+    }
+  </style>
+</head>
+<body data-theme="dark">
+
+<!-- ========== HEADER ========== -->
+<header class="top-header">
+  <div class="header-inner">
+    <div class="header-title">MikroTik CHR Installation on VirtualBox</div>
+    <div class="header-meta">
+      <span><strong>Vendor:</strong> MikroTik RouterOS</span>
+      <span><strong>Topic:</strong> CHR on VirtualBox</span>
+      <span><strong>Version:</strong> v7.x</span>
+      <span><strong>Env:</strong> Oracle VM VirtualBox</span>
+      <span><strong>Depth:</strong> Beginner → Expert</span>
+    </div>
+    <div class="header-controls">
+      <button class="theme-toggle" id="themeToggle" aria-label="থিম পরিবর্তন করুন">🌙 Light Mode</button>
+      <button class="expand-all" id="expandAll">সব খুলুন</button>
+      <button class="collapse-all" id="collapseAll">সব বন্ধ করুন</button>
+    </div>
+  </div>
+</header>
+
+<!-- ========== SEARCH + FILTERS ========== -->
+<div class="toolbar">
+  <div class="search-box">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="খুঁজুন... (কমান্ড, ধারণা, troubleshooting, ল্যাব)" autocomplete="off">
+  </div>
+  <div class="filter-group" id="filterGroup">
+    <button class="filter-btn active" data-filter="all">সব</button>
+    <button class="filter-btn" data-filter="concept">ধারণা</button>
+    <button class="filter-btn" data-filter="config">কনফিগারেশন</button>
+    <button class="filter-btn" data-filter="command">কমান্ড</button>
+    <button class="filter-btn" data-filter="verify">যাচাই</button>
+    <button class="filter-btn" data-filter="troubleshoot">Troubleshooting</button>
+    <button class="filter-btn" data-filter="security">Security</button>
+    <button class="filter-btn" data-filter="lab">Lab</button>
+    <button class="filter-btn" data-filter="production">Production</button>
+  </div>
+</div>
+
+<!-- ========== PROGRESS ========== -->
+<div class="progress-bar-container">
+  <div class="progress-track">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+  <div class="progress-label" id="progressLabel">অগ্রগতি: 0% (০টি সেকশন দেখা হয়েছে)</div>
+</div>
+
+<!-- ========== TOC ========== -->
+<div class="toc-container">
+  <button class="toc-toggle" id="tocToggle" aria-expanded="false">📑 সূচিপত্র দেখুন</button>
+  <nav class="toc-nav" id="tocNav">
+    <h3>সূচিপত্র</h3>
+    <ul class="toc-list" id="tocList">
+      <li><a href="#s1">১. ওভারভিউ ও স্কোপ</a></li>
+      <li><a href="#s2">২. পাঁচটি প্রধান স্তম্ভ</a></li>
+      <li><a href="#s3">৩. নলেজ ট্রি</a></li>
+      <li><a href="#s4">৪. আর্কিটেকচার ও টপোলজি</a></li>
+      <li><a href="#s5">৫. ELI10 ও ELI15</a></li>
+      <li><a href="#s6">৬. পরিভাষা</a></li>
+      <li><a href="#s7">৭. কেন ও কীভাবে</a></li>
+      <li><a href="#s8">৮. পূর্বশর্ত</a></li>
+      <li><a href="#s9">৯. CLI/GUI ম্যাপ</a></li>
+      <li><a href="#s10">১০. ধারণা ও ডিজাইন</a></li>
+      <li><a href="#s11">১১. বেসিক কনফিগারেশন</a></li>
+      <li><a href="#s12">১২. ইন্টারমিডিয়েট কনফিগারেশন</a></li>
+      <li><a href="#s13">১৩. অ্যাডভান্সড কনফিগারেশন</a></li>
+      <li><a href="#s14">১৪. কমান্ড এনসাইক্লোপিডিয়া</a></li>
+      <li><a href="#s15">১৫. কনফিগারেশন সেফটি ও রোলব্যাক</a></li>
+      <li><a href="#s16">১৬. ভেরিফিকেশন</a></li>
+      <li><a href="#s17">১৭. মনিটরিং ও লগ</a></li>
+      <li><a href="#s18">১৮. সিকিউরিটি</a></li>
+      <li><a href="#s19">১৯. পারফরম্যান্স</a></li>
+      <li><a href="#s20">২০. Troubleshooting</a></li>
+      <li><a href="#s21">২১. ডিসিশন ট্রি</a></li>
+      <li><a href="#s22">২২. ফেইলিওর সিমুলেশন</a></li>
+      <li><a href="#s23">২৩. বেস্ট প্র্যাকটিস</a></li>
+      <li><a href="#s24">২৪. প্রোডাকশন কনফিগারেশন</a></li>
+      <li><a href="#s25">২৫. NOC সিনারিও</a></li>
+      <li><a href="#s26">২৬. বিগিনার ল্যাব</a></li>
+      <li><a href="#s27">২৭. ইন্টারমিডিয়েট ল্যাব</a></li>
+      <li><a href="#s28">২৮. অ্যাডভান্সড ল্যাব</a></li>
+      <li><a href="#s29">২৯. ইন্টারভিউ প্রশ্ন</a></li>
+      <li><a href="#s30">৩০. চ্যালেঞ্জ</a></li>
+      <li><a href="#s31">৩১. চিট শিট</a></li>
+      <li><a href="#s32">৩২. মাস্টার কমান্ড চেকলিস্ট</a></li>
+      <li><a href="#s33">৩৩. ফাইনাল চেকলিস্ট</a></li>
+    </ul>
+  </nav>
+</div>
+
+<!-- ========== MAIN CONTENT ========== -->
+<main class="main-content" id="mainContent">
+
+<!-- SECTION 1 -->
+<section class="section open" id="s1" data-category="concept">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="true">
+    <h2><span class="section-number">১</span> ওভারভিউ ও স্কোপ</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <p><strong>MikroTik CHR (Cloud Hosted Router)</strong> হলো RouterOS-এর একটি ভার্চুয়ালাইজড সংস্করণ, যা আপনি VirtualBox-এর মতো হাইপারভাইজারে চালাতে পারেন। এটি ফিজিক্যাল MikroTik রাউটার কেনার আগে RouterOS শেখার, ল্যাব তৈরি করার, অথবা প্রোডাকশনে ভার্চুয়াল রাউটার হিসেবে ব্যবহার করার জন্য আদর্শ।</p>
+
+    <h3>স্কোপ (Scope)</h3>
+    <ul>
+      <li><strong>অন্তর্ভুক্ত:</strong> VirtualBox-এ CHR VDI ইমেজ ইমপোর্ট, VM কনফিগারেশন, প্রথম বুট, প্রাথমিক নেটওয়ার্কিং, লাইসেন্সিং, ভেরিফিকেশন, Troubleshooting এবং প্রোডাকশন বেস্ট প্র্যাকটিস।</li>
+      <li><strong>বাদ:</strong> VMware/Hyper-V/KVM-এ ইনস্টলেশন (আলাদা টপিক), জটিল রাউটিং প্রোটোকল কনফিগারেশন (BGP/OSPF), এবং ফিজিক্যাল MikroTik হার্ডওয়্যার।</li>
+      <li><strong>ভার্সন:</strong> RouterOS v7.x (CHR)। v6-এর সাথে গুরুত্বপূর্ণ পার্থক্য থাকলে উল্লেখ করা হবে।</li>
+    </ul>
+
+    <h3>কেন VirtualBox-এ CHR?</h3>
+    <ul>
+      <li>ফ্রি এবং ক্রস-প্ল্যাটফর্ম (Windows, macOS, Linux)।</li>
+      <li>দ্রুত সেটআপ, সহজ স্ন্যাপশট ও রোলব্যাক।</li>
+      <li>প্রোডাকশন রাউটার কনফিগারেশনের নিরাপদ অনুশীলন।</li>
+      <li>ফ্রি লাইসেন্সে ১ Mbps থ্রুপুট — শেখার জন্য যথেষ্ট।</li>
+    </ul>
+
+    <div class="callout info">
+      <span class="callout-label">ℹ️ তথ্য</span>
+      CHR-এর ফ্রি লাইসেন্সে প্রতি ইন্টারফেসে ১ Mbps আপলোড সীমা আছে। ল্যাব ও শেখার জন্য এটি যথেষ্ট, কিন্তু থ্রুপুট টেস্টিং বা প্রোডাকশন ব্যবহারের জন্য পেইড লাইসেন্স বা ৬০ দিনের ট্রায়াল প্রয়োজন। [citation:5][citation:6]
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 2: FIVE PILLARS -->
+<section class="section open" id="s2" data-category="concept">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="true">
+    <h2><span class="section-number">২</span> পাঁচটি প্রধান স্তম্ভ (Five Priority Pillars)</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <p>এই হ্যান্ডবুকের পাঁচটি মূল স্তম্ভ হলো:</p>
+    <ol>
+      <li><strong>ধারণা ও কনফিগারেশন:</strong> CHR কী, কেন VirtualBox, এবং ধাপে ধাপে কনফিগারেশন।</li>
+      <li><strong>ভেন্ডর-স্পেসিফিক কমান্ড:</strong> MikroTik RouterOS v7-এর সঠিক CLI কমান্ড।</li>
+      <li><strong>হ্যান্ডস-অন ল্যাব:</strong> বাস্তব টপোলজি, কনফিগারেশন এবং টেস্ট।</li>
+      <li><strong>ভেরিফিকেশন ও Troubleshooting:</strong> প্রতিটি ধাপ যাচাই এবং সমস্যা সমাধান।</li>
+      <li><strong>বেস্ট প্র্যাকটিস ও সতর্কতা:</strong> প্রোডাকশন ব্যবহারের নিরাপদ নির্দেশিকা।</li>
+    </ol>
+    <p>নিচের সেকশনগুলোতে এই পাঁচটি স্তম্ভকে সবচেয়ে বেশি গভীরতা দিয়ে আলোচনা করা হয়েছে।</p>
+  </div>
+</section>
+
+<!-- SECTION 3: KNOWLEDGE TREE -->
+<section class="section" id="s3" data-category="concept">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">৩</span> নলেজ ট্রি</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <div class="diagram">
+      CHR Installation<br>
+      ├── 1. Preparation<br>
+      │   ├── VirtualBox Install<br>
+      │   ├── CHR VDI Download<br>
+      │   └── System Requirements<br>
+      ├── 2. VM Creation<br>
+      │   ├── New VM Wizard<br>
+      │   ├── RAM/CPU Allocation<br>
+      │   └── Disk Attachment<br>
+      ├── 3. VM Settings<br>
+      │   ├── Boot Order<br>
+      │   ├── Network Adapter<br>
+      │   └── Processor Options<br>
+      ├── 4. First Boot<br>
+      │   ├── Login (admin/blank)<br>
+      │   └── Interface Detection<br>
+      ├── 5. Initial Config<br>
+      │   ├── IP Addressing<br>
+      │   ├── DHCP Client<br>
+      │   └── Management Access<br>
+      ├── 6. Licensing<br>
+      │   ├── Free (1 Mbps)<br>
+      │   ├── 60-day Trial<br>
+      │   └── Perpetual (P1/P10/PU)<br>
+      └── 7. Verification & Troubleshooting<br>
+          ├── Network Connectivity<br>
+          ├── License Status<br>
+          └── Performance Baseline
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 4: ARCHITECTURE -->
+<section class="section" id="s4" data-category="concept">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">৪</span> আর্কিটেকচার ও টপোলজি</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>VirtualBox-এ CHR-এর সাধারণ টপোলজি</h3>
+    <div class="diagram">
+      <span class="box">Host OS</span>
+      <span class="arrow">→</span>
+      <span class="box">VirtualBox</span>
+      <span class="arrow">→</span>
+      <span class="box">CHR VM</span>
+      <br><br>
+      <span class="label">Network Modes:</span><br>
+      <span class="box">NAT</span> (Internet access for CHR)<br>
+      <span class="box">Bridged</span> (CHR on physical LAN)<br>
+      <span class="box">Host-Only</span> (Host ↔ CHR management)<br>
+      <span class="box">Internal</span> (CHR ↔ other VMs)
+    </div>
+
+    <h3>কম্পোনেন্ট</h3>
+    <ul>
+      <li><strong>Host:</strong> আপনার ফিজিক্যাল কম্পিউটার (Windows/macOS/Linux)।</li>
+      <li><strong>Hypervisor:</strong> VirtualBox — ভার্চুয়াল মেশিন চালায়।</li>
+      <li><strong>Guest (CHR):</strong> RouterOS চালানো ভার্চুয়াল রাউটার।</li>
+      <li><strong>Virtual Disk (VDI):</strong> CHR-এর বুট ডিস্ক।</li>
+      <li><strong>Virtual NIC:</strong> VirtualBox-এর ভার্চুয়াল নেটওয়ার্ক অ্যাডাপ্টার।</li>
+    </ul>
+  </div>
+</section>
+
+<!-- SECTION 5: ELI10 & ELI15 -->
+<section class="section" id="s5" data-category="concept">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">৫</span> ELI10 ও ELI15</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>ELI10 (সহজ উপমা)</h3>
+    <p>ভাবুন, আপনার কম্পিউটার হলো একটি বড় বাড়ি। VirtualBox হলো সেই বাড়ির ভেতরে একটি ছোট ঘর। CHR হলো সেই ঘরে রাখা একটি ছোট রাউটার — যা দেখতে ভার্চুয়াল, কিন্তু কাজ করে আসল রাউটারের মতোই। আপনি এতে ক্লিক করে, কমান্ড দিয়ে নেটওয়ার্ক শিখতে পারেন, কোনো আসল রাউটার কেনার দরকার নেই।</p>
+
+    <h3>ELI15 (প্রযুক্তিগত)</h3>
+    <p>CHR হলো RouterOS-এর একটি x86-64 ভার্চুয়াল ইমেজ। VirtualBox একটি Type-2 হাইপারভাইজার যা হোস্ট OS-এর উপর চলে। CHR VM বুট হলে VirtualBox-এর ভার্চুয়াল NIC-গুলো RouterOS ইন্টারফেস হিসেবে দেখা যায় (যেমন ether1, ether2)। আপনি NAT/Bridged/Host-Only মোডে নেটওয়ার্কিং কনফিগার করতে পারেন। ম্যানেজমেন্ট WinBox (TCP 8291), SSH (TCP 22), বা WebFig (HTTP/HTTPS) দিয়ে করা যায়।</p>
+  </div>
+</section>
+
+<!-- SECTION 6: TERMINOLOGY -->
+<section class="section" id="s6" data-category="concept">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">৬</span> পরিভাষা (Terminology)</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Term</th><th>Full Form</th><th>অর্থ (Bangla)</th><th>উদ্দেশ্য</th></tr></thead>
+        <tbody>
+          <tr><td>CHR</td><td>Cloud Hosted Router</td><td>ভার্চুয়াল রাউটার ইমেজ</td><td>হাইপারভাইজারে RouterOS চালানো</td></tr>
+          <tr><td>VDI</td><td>VirtualBox Disk Image</td><td>VirtualBox-এর ডিস্ক ফরম্যাট</td><td>CHR-এর বুট ডিস্ক</td></tr>
+          <tr><td>NAT</td><td>Network Address Translation</td><td>ঠিকানা রূপান্তর</td><td>VM-কে ইন্টারনেট অ্যাক্সেস দেওয়া</td></tr>
+          <tr><td>Bridged</td><td>—</td><td>ফিজিক্যাল LAN-এ সরাসরি সংযোগ</td><td>CHR-কে আলাদা ডিভাইস হিসেবে দেখানো</td></tr>
+          <tr><td>Host-Only</td><td>—</td><td>শুধু হোস্ট ↔ VM</td><td>নিরাপদ ম্যানেজমেন্ট</td></tr>
+          <tr><td>WinBox</td><td>—</td><td>MikroTik-এর GUI টুল</td><td>সহজ কনফিগারেশন</td></tr>
+          <tr><td>License</td><td>—</td><td>ব্যবহারের অনুমতি</td><td>থ্রুপুট সীমা নির্ধারণ</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 7: WHY & HOW -->
+<section class="section" id="s7" data-category="concept">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">৭</span> কেন ও কীভাবে (WHY & HOW)</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>কেন CHR?</h3>
+    <ul>
+      <li>ফিজিক্যাল রাউটার কেনার আগে RouterOS শেখা।</li>
+      <li>ল্যাব টেস্টিং — কনফিগারেশন ভাঙা ও ঠিক করার নিরাপদ পরিবেশ।</li>
+      <li>ছোট প্রোডাকশন ভার্চুয়াল রাউটার (লাইসেন্সসহ)।</li>
+      <li>ক্লাউড/ভার্চুয়ালাইজড পরিবেশে রাউটিং।</li>
+    </ul>
+
+    <h3>কীভাবে কাজ করে?</h3>
+    <ol>
+      <li>CHR VDI ইমেজ VirtualBox-এ অ্যাটাচ করা হয়।</li>
+      <li>VM বুট হলে RouterOS কার্নেল লোড হয়।</li>
+      <li>VirtualBox-এর ভার্চুয়াল NIC-গুলো RouterOS-এ ether ইন্টারফেস হিসেবে দেখা যায়।</li>
+      <li>RouterOS তার নিজস্ব IP স্ট্যাক, ফায়ারওয়াল, রাউটিং টেবিল ব্যবহার করে।</li>
+      <li>ম্যানেজমেন্ট WinBox/SSH/WebFig দিয়ে করা হয়।</li>
+    </ol>
+  </div>
+</section>
+
+<!-- SECTION 8: PREREQUISITES -->
+<section class="section" id="s8" data-category="concept">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">৮</span> পূর্বশর্ত (Prerequisites)</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>হার্ডওয়্যার</h3>
+    <ul>
+      <li>64-bit প্রসেসর, VT-x/AMD-V ভার্চুয়ালাইজেশন সাপোর্ট (BIOS-এ চালু)।</li>
+      <li>ন্যূনতম ২৫৬ MB RAM CHR-এর জন্য; ১০২৪ MB প্রস্তাবিত।</li>
+      <li>CHR VDI ইমেজের জন্য ডিস্ক স্পেস (~১২৮ MB)।</li>
+    </ul>
+
+    <h3>সফটওয়্যার</h3>
+    <ul>
+      <li>VirtualBox-এর সর্বশেষ সংস্করণ (অফিসিয়াল সাইট থেকে)।</li>
+      <li>MikroTik CHR VDI ইমেজ (mikrotik.com/download থেকে)।</li>
+      <li>WinBox (ঐচ্ছিক, কিন্তু সুপারিশকৃত)।</li>
+    </ul>
+
+    <h3>নেটওয়ার্ক</h3>
+    <ul>
+      <li>NAT মোডে ইন্টারনেট অ্যাক্সেস (ডিফল্ট)।</li>
+      <li>Bridged মোডে ফিজিক্যাল নেটওয়ার্কের সাথে সংযোগ।</li>
+      <li>Host-Only মোডে হোস্ট থেকে ম্যানেজমেন্ট।</li>
+    </ul>
+  </div>
+</section>
+
+<!-- SECTION 9: CLI/GUI MAP -->
+<section class="section" id="s9" data-category="command">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">৯</span> CLI/GUI ম্যাপ</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>ম্যানেজমেন্ট অ্যাক্সেস</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>পদ্ধতি</th><th>পোর্ট</th><th>ব্যবহার</th></tr></thead>
+        <tbody>
+          <tr><td>WinBox</td><td>TCP 8291</td><td>GUI, সহজ কনফিগারেশন</td></tr>
+          <tr><td>SSH</td><td>TCP 22</td><td>CLI, স্ক্রিপ্টিং</td></tr>
+          <tr><td>WebFig</td><td>TCP 80/443</td><td>ব্রাউজার-ভিত্তিক GUI</td></tr>
+          <tr><td>Console (VirtualBox)</td><td>—</td><td>প্রথম বুট, জরুরি অবস্থা</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>RouterOS CLI মেনু ম্যাপ</h3>
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">RouterOS v7 CLI Menu</span></div>
+      <pre><code>/interface    — ইন্টারফেস দেখুন/কনফিগার করুন
+/ip           — IP অ্যাড্রেস, DHCP, রাউটিং
+/system       — হোস্টনেম, লাইসেন্স, ইউজার
+/ip firewall  — ফায়ারওয়াল রুল
+/ip route     — রাউটিং টেবিল
+/log          — লগ দেখুন
+/export       — কনফিগারেশন এক্সপোর্ট</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 10: CONCEPT & DESIGN -->
+<section class="section" id="s10" data-category="config">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">১০</span> ধারণা ও ডিজাইন</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>VirtualBox নেটওয়ার্ক মোড</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>মোড</th><th>ব্যবহারের ক্ষেত্রে</th><th>CHR-এর IP</th></tr></thead>
+        <tbody>
+          <tr><td>NAT</td><td>শুধু ইন্টারনেট অ্যাক্সেস</td><td>10.0.2.15 (ডিফল্ট)</td></tr>
+          <tr><td>Bridged</td><td>ফিজিক্যাল LAN-এ সরাসরি</td><td>LAN-এর DHCP/স্ট্যাটিক</td></tr>
+          <tr><td>Host-Only</td><td>হোস্ট থেকে ম্যানেজমেন্ট</td><td>192.168.56.x</td></tr>
+          <tr><td>Internal</td><td>VM ↔ VM যোগাযোগ</td><td>ম্যানুয়ালি সেট</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout warning">
+      <span class="callout-label">⚠️ সতর্কতা</span>
+      NAT মোডে CHR স্বয়ংক্রিয়ভাবে 10.0.2.15 IP পায়। বাইরে থেকে (হোস্ট থেকে) WinBox দিয়ে সংযোগ করতে চাইলে Host-Only অ্যাডাপ্টার যোগ করুন অথবা NAT-এ পোর্ট ফরওয়ার্ডিং কনফিগার করুন।
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 11: BASIC CONFIG -->
+<section class="section" id="s11" data-category="config">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">১১</span> বেসিক কনফিগারেশন (VirtualBox-এ CHR ইনস্টল)</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>ধাপ ১: CHR VDI ডাউনলোড</h3>
+    <p>MikroTik-এর অফিসিয়াল ডাউনলোড পেজ থেকে <strong>Cloud Hosted Router</strong> সেকশনে যান এবং <strong>VirtualBox (VDI)</strong> ইমেজ ডাউনলোড করুন। Stable সংস্করণ প্রোডাকশনের জন্য প্রস্তাবিত। [citation:1][citation:12]</p>
+
+    <h3>ধাপ ২: VirtualBox-এ নতুন VM তৈরি</h3>
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">VirtualBox GUI — New VM</span></div>
+      <pre><code>Name:    MikroTik_CHR
+Type:    Linux
+Version: Other Linux (64-bit)
+Memory:  1024 MB (ন্যূনতম 256 MB)
+CPU:     1-2 (ওয়ার্কলোড অনুযায়ী)
+Disk:    "Use an existing virtual hard disk file" → CHR.vdi নির্বাচন করুন</code></pre>
+    </div>
+
+    <h3>ধাপ ৩: VM সেটিংস</h3>
+    <ul>
+      <li><strong>System → Boot Order:</strong> Hard Disk প্রথমে, Floppy/Optical আনচেক করুন। [citation:1]</li>
+      <li><strong>Network → Adapter 1:</strong> NAT অথবা Bridged নির্বাচন করুন। [citation:1]</li>
+      <li><strong>Audio/USB:</strong> প্রয়োজন না হলে ডিজেবল করুন।</li>
+    </ul>
+
+    <h3>ধাপ ৪: প্রথম বুট</h3>
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">RouterOS Login</span></div>
+      <pre><code>Username: admin
+Password: (খালি — শুধু Enter চাপুন)</code></pre>
+    </div>
+    <p>লগইন করার পর অবিলম্বে পাসওয়ার্ড পরিবর্তন করুন: <code>/password</code></p>
+
+    <h3>ধাপ ৫: প্রাথমিক নেটওয়ার্কিং</h3>
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">RouterOS v7 — Interface Check</span></div>
+      <pre><code>/interface print</code></pre>
+    </div>
+    <p>VirtualBox-এর অ্যাডাপ্টারগুলো <code>ether1</code>, <code>ether2</code> ইত্যাদি হিসেবে দেখা যাবে।</p>
+
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">RouterOS v7 — DHCP Client (NAT মোডে IP পেতে)</span></div>
+      <pre><code>/ip dhcp-client add interface=ether1 disabled=no</code></pre>
+    </div>
+
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">RouterOS v7 — IP অ্যাড্রেস যাচাই</span></div>
+      <pre><code>/ip address print</code></pre>
+    </div>
+    <p>NAT মোডে সাধারণত <code>10.0.2.15/24</code> দেখাবে।</p>
+
+    <div class="callout info">
+      <span class="callout-label">ℹ️ তথ্য</span>
+      WinBox দিয়ে সংযোগ করতে হলে VirtualBox-এ অতিরিক্ত একটি Host-Only অ্যাডাপ্টার যোগ করুন। Host-Only অ্যাডাপ্টারের IP হবে <code>192.168.56.1/24</code> (হোস্টে), এবং CHR-এ <code>192.168.56.2/24</code> দিন।
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 12: INTERMEDIATE CONFIG -->
+<section class="section" id="s12" data-category="config">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">১২</span> ইন্টারমিডিয়েট কনফিগারেশন</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>একাধিক নেটওয়ার্ক অ্যাডাপ্টার</h3>
+    <p>VirtualBox-এ একাধিক NIC যোগ করলে RouterOS-এ সেগুলো আলাদা ইন্টারফেস হিসেবে দেখা যায়। উদাহরণ: Adapter 1 = NAT (ether1), Adapter 2 = Host-Only (ether2), Adapter 3 = Internal (ether3)।</p>
+
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">RouterOS v7 — স্ট্যাটিক IP কনফিগার</span></div>
+      <pre><code>/ip address add address=192.168.56.2/24 interface=ether2
+/ip address add address=10.10.10.1/24 interface=ether3</code></pre>
+    </div>
+
+    <h3>ফায়ারওয়াল বেসিক</h3>
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">RouterOS v7 — বেসিক ফায়ারওয়াল রুল (WinBox অ্যাক্সেস সীমিত)</span></div>
+      <pre><code>/ip firewall filter
+add chain=input action=accept connection-state=established,related
+add chain=input action=accept protocol=tcp dst-port=8291 src-address=192.168.56.0/24
+add chain=input action=drop in-interface=ether1</code></pre>
+    </div>
+
+    <div class="callout warning">
+      <span class="callout-label">⚠️ সতর্কতা</span>
+      শেষ রুলটি <code>ether1</code> (NAT/ইন্টারনেট) থেকে সব ইনপুট ড্রপ করে। নিশ্চিত করুন যে আপনি Host-Only বা Internal ইন্টারফেস দিয়ে ম্যানেজমেন্ট অ্যাক্সেস রাখছেন, নইলে লকআউট হতে পারেন।
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 13: ADVANCED CONFIG -->
+<section class="section" id="s13" data-category="config">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">১৩</span> অ্যাডভান্সড কনফিগারেশন</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>লাইসেন্সিং</h3>
+    <p>CHR-এর লাইসেন্স স্তর:</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>লাইসেন্স</th><th>থ্রুপুট</th><th>মূল্য</th><th>নোট</th></tr></thead>
+        <tbody>
+          <tr><td>Free</td><td>1 Mbps/interface</td><td>ফ্রি</td><td>শেখার জন্য যথেষ্ট</td></tr>
+          <tr><td>P1</td><td>1 Gbps</td><td>$45</td><td>পারপেচুয়াল</td></tr>
+          <tr><td>P10</td><td>10 Gbps</td><td>$95</td><td>পারপেচুয়াল</td></tr>
+          <tr><td>P-Unlimited</td><td>আনলিমিটেড</td><td>$250</td><td>সর্বোচ্চ স্তর</td></tr>
+          <tr><td>60-day Trial</td><td>P-Unlimited</td><td>ফ্রি</td><td>MikroTik অ্যাকাউন্ট প্রয়োজন</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>ট্রায়াল লাইসেন্স চালু করা</h3>
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">RouterOS v7 — License Renew (Trial)</span></div>
+      <pre><code>/system/license/renew account=your_mikrotik_email password=your_password level=p1</code></pre>
+    </div>
+    <p>সফল হলে <code>/system/license/print</code> কমান্ডে <code>level: p1</code> এবং <code>next-renewal-at</code> দেখাবে। [citation:3]</p>
+
+    <div class="callout warning">
+      <span class="callout-label">⚠️ সতর্কতা</span>
+      ট্রায়াল ৬০ দিনের। মেয়াদ শেষ হলে CHR চলতে থাকবে কিন্তু ফ্রি ১ Mbps-এ ফিরে যাবে এবং RouterOS আপগ্রেড করা যাবে না। [citation:5][citation:6]
+    </div>
+
+    <h3>ক্লোন সতর্কতা</h3>
+    <p>একই VDI থেকে একাধিক VM বানালে System ID একই হতে পারে। লাইসেন্স সমস্যা এড়াতে প্রথম বুটে (ফ্রি লাইসেন্স থাকাকালীন) চালান:</p>
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">RouterOS v7 — Generate New System ID</span></div>
+      <pre><code>/system/license/generate-new-id</code></pre>
+    </div>
+    <p>এটি শুধুমাত্র ফ্রি লাইসেন্সে ব্যবহার করুন। পেইড/ট্রায়াল লাইসেন্স থাকলে ব্যবহার করবেন না। [citation:3][citation:5]</p>
+  </div>
+</section>
+
+<!-- SECTION 14: COMMAND ENCYCLOPEDIA -->
+<section class="section" id="s14" data-category="command">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">১৪</span> কমান্ড এনসাইক্লোপিডিয়া (MikroTik RouterOS v7)</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">COMMAND #1 — Interface Print</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+      <pre><code>/interface print</code></pre>
+    </div>
+    <p><strong>উদ্দেশ্য:</strong> সব ইন্টারফেস এবং তাদের স্ট্যাটাস দেখুন।<br>
+    <strong>কখন:</strong> প্রথম বুটের পর, বা নেটওয়ার্ক সমস্যায়।<br>
+    <strong>প্রত্যাশিত:</strong> ether1, ether2... দেখা যাবে।<br>
+    <strong>Troubleshooting:</strong> কোনো ইন্টারফেস না দেখালে VirtualBox NIC সেটিংস চেক করুন।</p>
+
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">COMMAND #2 — IP Address Print</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+      <pre><code>/ip address print</code></pre>
+    </div>
+    <p><strong>উদ্দেশ্য:</strong> কনফিগার করা IP অ্যাড্রেস দেখুন।<br>
+    <strong>প্রত্যাশিত:</strong> DHCP থেকে পাওয়া IP (যেমন 10.0.2.15/24)।</p>
+
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">COMMAND #3 — License Print</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+      <pre><code>/system license print</code></pre>
+    </div>
+    <p><strong>উদ্দেশ্য:</strong> বর্তমান লাইসেন্স স্তর ও মেয়াদ দেখুন।<br>
+    <strong>প্রত্যাশিত:</strong> Free লাইসেন্সে <code>level: free</code>।</p>
+
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">COMMAND #4 — Export Configuration</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+      <pre><code>/export compact</code></pre>
+    </div>
+    <p><strong>উদ্দেশ্য:</strong> সম্পূর্ণ কনফিগারেশন টেক্সট হিসেবে দেখুন।<br>
+    <strong>ব্যবহার:</strong> ব্যাকআপ, ডকুমেন্টেশন, বা অন্য ডিভাইসে রিস্টোরের জন্য।</p>
+
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">COMMAND #5 — System Resource Print</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+      <pre><code>/system resource print</code></pre>
+    </div>
+    <p><strong>উদ্দেশ্য:</strong> CPU, RAM, আপটাইম, সংস্করণ দেখুন।<br>
+    <strong>প্রত্যাশিত:</strong> <code>version: 7.x</code>, <code>cpu-load</code> কম।</p>
+  </div>
+</section>
+
+<!-- SECTION 15: CONFIG SAFETY -->
+<section class="section" id="s15" data-category="security">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">১৫</span> কনফিগারেশন সেফটি ও রোলব্যাক</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>VirtualBox স্ন্যাপশট</h3>
+    <p>গুরুত্বপূর্ণ পরিবর্তনের আগে VM স্ন্যাপশট নিন। রোলব্যাক দরকার হলে স্ন্যাপশটে ফিরে যান।</p>
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">VirtualBox CLI — Snapshot</span></div>
+      <pre><code>VBoxManage snapshot "MikroTik_CHR" take "before-change"
+VBoxManage snapshot "MikroTik_CHR" restore "before-change"</code></pre>
+    </div>
+
+    <h3>RouterOS কনফিগারেশন এক্সপোর্ট</h3>
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">RouterOS v7 — Export to File</span></div>
+      <pre><code>/export file=backup-before-change</code></pre>
+    </div>
+    <p>ফাইলটি VirtualBox শেয়ার্ড ফোল্ডার বা SSH/SCP দিয়ে হোস্টে কপি করুন।</p>
+
+    <div class="callout danger">
+      <span class="callout-label">🚨 বিপদ</span>
+      <code>/system reset</code> চালালে সম্পূর্ণ কনফিগারেশন মুছে যাবে এবং ডিফল্টে ফিরে যাবে। শুধুমাত্র ল্যাবে ব্যবহার করুন, প্রোডাকশনে নয়।
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 16: VERIFICATION -->
+<section class="section" id="s16" data-category="verify">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">১৬</span> ভেরিফিকেশন</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>চেক</th><th>কমান্ড</th><th>সুস্থ ফল</th><th>অসুস্থ ফল</th><th>পরবর্তী পদক্ষেপ</th></tr></thead>
+        <tbody>
+          <tr><td>VM চলছে</td><td>VirtualBox GUI</td><td>Running</td><td>Aborted/Paused</td><td>লগ দেখুন</td></tr>
+          <tr><td>ইন্টারফেস</td><td><code>/interface print</code></td><td>ether1 present</td><td>কোনো ইন্টারফেস নেই</td><td>NIC টাইপ পরিবর্তন</td></tr>
+          <tr><td>IP</td><td><code>/ip address print</code></td><td>IP আছে</td><td>IP নেই</td><td>DHCP/স্ট্যাটিক কনফিগার</td></tr>
+          <tr><td>লাইসেন্স</td><td><code>/system license print</code></td><td>Free/P1</td><td>Error</td><td>MikroTik অ্যাকাউন্ট চেক</td></tr>
+          <tr><td>Ping (NAT)</td><td><code>/ping 8.8.8.8</code></td><td>Reply</td><td>Timeout</td><td>NAT/DNS চেক</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 17: MONITORING -->
+<section class="section" id="s17" data-category="verify">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">১৭</span> মনিটরিং ও লগ</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">RouterOS v7 — Log Print</span></div>
+      <pre><code>/log print</code></pre>
+    </div>
+    <p>বুট সমস্যা, লাইসেন্স ত্রুটি, বা ইন্টারফেস ইস্যু দেখতে।</p>
+
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">RouterOS v7 — Interface Monitor</span></div>
+      <pre><code>/interface monitor-traffic ether1</code></pre>
+    </div>
+    <p>রিয়েল-টাইম ট্রাফিক দেখুন। থ্রুপুট লাইসেন্স সীমার কাছাকাছি কিনা বোঝা যায়।</p>
+  </div>
+</section>
+
+<!-- SECTION 18: SECURITY -->
+<section class="section" id="s18" data-category="security">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">১৮</span> সিকিউরিটি</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>প্রাথমিক হার্ডেনিং</h3>
+    <ul>
+      <li><strong>পাসওয়ার্ড:</strong> প্রথম লগইনে <code>admin</code>-এর পাসওয়ার্ড সেট করুন।</li>
+      <li><strong>WinBox পোর্ট:</strong> ডিফল্ট 8291 পরিবর্তন করুন অথবা IP-দ্বারা সীমিত করুন।</li>
+      <li><strong>Firewall:</strong> শুধুমাত্র বিশ্বস্ত সোর্স থেকে ম্যানেজমেন্ট অ্যাক্সেস অনুমোদন করুন।</li>
+      <li><strong>Services:</strong> অপ্রয়োজনীয় সার্ভিস (Telnet, FTP) বন্ধ করুন।</li>
+    </ul>
+
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">RouterOS v7 — Disable Insecure Services</span></div>
+      <pre><code>/ip service disable telnet,ftp,www
+/ip service set winbox address=192.168.56.0/24</code></pre>
+    </div>
+
+    <div class="callout noc">
+      <span class="callout-label">🛡️ NOC টিপ</span>
+      প্রোডাকশনে CHR ব্যবহার করলে NAT মোডে রেখে বাইরে থেকে সরাসরি ম্যানেজমেন্ট অ্যাক্সেস দেবেন না। VPN বা ব্যাস্টিয়ন হোস্ট ব্যবহার করুন।
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 19: PERFORMANCE -->
+<section class="section" id="s19" data-category="production">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">১৯</span> পারফরম্যান্স</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>VirtualBox পারফরম্যান্স টিউনিং</h3>
+    <ul>
+      <li><strong>CPU:</strong> একাধিক vCPU দিলে RouterOS মাল্টি-কোর ব্যবহার করতে পারে।</li>
+      <li><strong>RAM:</strong> 1024 MB বা তার বেশি।</li>
+      <li><strong>NIC টাইপ:</strong> <code>Intel PRO/1000 MT Desktop</code> সুপারিশকৃত। [citation:14]</li>
+      <li><strong>Host I/O:</strong> VDI ফাইল SSD-তে রাখুন।</li>
+    </ul>
+
+    <h3>লাইসেন্স থ্রুপুট সীমা</h3>
+    <p>ফ্রি লাইসেন্সে ১ Mbps সীমা চালু থাকলে উচ্চ থ্রুপুট আশা করবেন না। <code>/system license print</code> দিয়ে লাইসেন্স যাচাই করুন।</p>
+  </div>
+</section>
+
+<!-- SECTION 20: TROUBLESHOOTING -->
+<section class="section" id="s20" data-category="troubleshoot">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">২০</span> Troubleshooting</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>সাধারণ সমস্যা ও সমাধান</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>লক্ষণ</th><th>সম্ভাব্য কারণ</th><th>প্রথম চেক</th><th>কমান্ড</th><th>সমাধান</th></tr></thead>
+        <tbody>
+          <tr><td>VM বুট হয় না</td><td>VDI অ্যাটাচ সমস্যা</td><td>Boot order</td><td>VirtualBox Settings</td><td>Hard Disk প্রথমে রাখুন</td></tr>
+          <tr><td>কোনো ইন্টারফেস নেই</td><td>NIC টাইপ অসামঞ্জস্য</td><td>Adapter type</td><td>VirtualBox Network</td><td>Intel PRO/1000 MT নির্বাচন</td></tr>
+          <tr><td>IP পাচ্ছে না</td><td>DHCP কনফিগার নেই</td><td>DHCP client</td><td><code>/ip dhcp-client print</code></td><td><code>/ip dhcp-client add interface=ether1</code></td></tr>
+          <tr><td>WinBox সংযোগ হয় না</td><td>NAT মোডে হোস্ট থেকে অ্যাক্সেস নেই</td><td>Host-Only অ্যাডাপ্টার</td><td><code>/ip address print</code></td><td>Host-Only NIC যোগ করুন</td></tr>
+          <tr><td>ধীর গতি</td><td>ফ্রি লাইসেন্স 1 Mbps</td><td>License level</td><td><code>/system license print</code></td><td>ট্রায়াল/পেইড লাইসেন্স</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 21: DECISION TREE -->
+<section class="section" id="s21" data-category="troubleshoot">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">২১</span> ডিসিশন ট্রি</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <div class="diagram">
+      VM Start<br>
+      ├── Boot? <span class="arrow">→</span> No <span class="arrow">→</span> Check VDI attach, Boot order<br>
+      └── Yes<br>
+          ├── Login? <span class="arrow">→</span> No <span class="arrow">→</span> admin/blank, keyboard<br>
+          └── Yes<br>
+              ├── Interface? <span class="arrow">→</span> No <span class="arrow">→</span> Change NIC type<br>
+              └── Yes<br>
+                  ├── IP? <span class="arrow">→</span> No <span class="arrow">→</span> DHCP/static config<br>
+                  └── Yes<br>
+                      ├── Ping 8.8.8.8? <span class="arrow">→</span> No <span class="arrow">→</span> NAT/route/DNS<br>
+                      └── Yes <span class="arrow">→</span> ✅ Working
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 22: FAILURE SIMULATION -->
+<section class="section" id="s22" data-category="troubleshoot">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">২২</span> ফেইলিওর সিমুলেশন</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>সিমুলেশন ১: ভুল NIC টাইপ</h3>
+    <p><strong>সিম্পটম:</strong> <code>/interface print</code> খালি।<br>
+    <strong>ফিক্স:</strong> VirtualBox → Settings → Network → Advanced → Adapter Type = Intel PRO/1000 MT Desktop।</p>
+
+    <h3>সিমুলেশন ২: DHCP কনফিগার না থাকা</h3>
+    <p><strong>সিম্পটম:</strong> IP নেই।<br>
+    <strong>ফিক্স:</strong> <code>/ip dhcp-client add interface=ether1 disabled=no</code></p>
+
+    <h3>সিমুলেশন ৩: লাইসেন্স সমস্যা</h3>
+    <p><strong>সিম্পটম:</strong> ১ Mbps-এর বেশি থ্রুপুট নেই।<br>
+    <strong>চেক:</strong> <code>/system license print</code> → <code>level: free</code>।<br>
+    <strong>ফিক্স:</strong> ট্রায়াল/পেইড লাইসেন্স চালু করুন।</p>
+
+    <h3>সিমুলেশন ৪: WinBox লকআউট</h3>
+    <p><strong>সিম্পটম:</strong> WinBox সংযোগ করে না।<br>
+    <strong>ফিক্স:</strong> VirtualBox Console দিয়ে লগইন করে ফায়ারওয়াল/সার্ভিস চেক করুন।</p>
+
+    <h3>সিমুলেশন ৫: বুট লুপ</h3>
+    <p><strong>সিম্পটম:</strong> VM বারবার রিস্টার্ট।<br>
+    <strong>ফিক্স:</strong> VirtualBox লগ দেখুন, VDI রি-ডাউনলোড করুন।</p>
+  </div>
+</section>
+
+<!-- SECTION 23: BEST PRACTICES -->
+<section class="section" id="s23" data-category="production">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">২৩</span> বেস্ট প্র্যাকটিস</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>ল্যাব vs প্রোডাকশন</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>দিক</th><th>ল্যাব</th><th>প্রোডাকশন</th></tr></thead>
+        <tbody>
+          <tr><td>ব্যাকআপ</td><td>স্ন্যাপশট যথেষ্ট</td><td>নিয়মিত এক্সপোর্ট + অফসাইট</td></tr>
+          <tr><td>পরিবর্তন</td><td>স্বাধীন</td><td>চেঞ্জ উইন্ডো + পিয়ার রিভিউ</td></tr>
+          <tr><td>মনিটরিং</td><td>ঐচ্ছিক</td><td>বাধ্যতামূলক</td></tr>
+          <tr><td>সিকিউরিটি</td><td>ঢিলেঢালা</td><td>কঠোর</td></tr>
+          <tr><td>লাইসেন্স</td><td>ফ্রি/ট্রায়াল</td><td>পেইড (P1/P10/PU)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>মূল সুপারিশ</h3>
+    <ul>
+      <li>প্রথম দিনেই admin পাসওয়ার্ড সেট করুন।</li>
+      <li>VirtualBox স্ন্যাপশট নিয়মিত নিন।</li>
+      <li><code>/export</code> নিয়মিত সংরক্ষণ করুন।</li>
+      <li>ফ্রি লাইসেন্সের সীমাবদ্ধতা সম্পর্কে সচেতন থাকুন।</li>
+      <li>NAT-এ রেখে বাইরে থেকে সরাসরি ম্যানেজমেন্ট অ্যাক্সেস দেবেন না।</li>
+    </ul>
+  </div>
+</section>
+
+<!-- SECTION 24: PRODUCTION CONFIG -->
+<section class="section" id="s24" data-category="production">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">২৪</span> প্রোডাকশন কনফিগারেশন</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <p>প্রোডাকশনে CHR ব্যবহারের আগে:</p>
+    <ol>
+      <li>P1 বা তার বেশি লাইসেন্স কিনুন।</li>
+      <li>Bridged মোডে সঠিক নেটওয়ার্ক অ্যাডাপ্টার কনফিগার করুন।</li>
+      <li>ফায়ারওয়াল হার্ডেনিং প্রয়োগ করুন।</li>
+      <li>নিয়মিত কনফিগারেশন ব্যাকআপ সেটআপ করুন।</li>
+      <li>মনিটরিং (SNMP, Syslog) চালু করুন।</li>
+    </ol>
+
+    <div class="callout production">
+      <span class="callout-label">🚀 প্রোডাকশন</span>
+      প্রোডাকশনে CHR চালানোর আগে অন্তত ৭ দিন ল্যাবে টেস্ট করুন। VirtualBox-এর নেটওয়ার্ক পারফরম্যান্স ফিজিক্যাল হার্ডওয়্যারের মতো নয় — থ্রুপুট বেঞ্চমার্ক করুন।
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 25: NOC SCENARIO -->
+<section class="section" id="s25" data-category="production">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">২৫</span> NOC সিনারিও</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <p><strong>সিনারিও:</strong> একটি ছোট ISP VirtualBox-এ CHR ব্যবহার করে কাস্টমার ট্রাফিক রাউট করছে। হঠাৎ কাস্টমাররা ধীর গতির অভিযোগ করছে।</p>
+    <p><strong>প্রথম চেক:</strong> <code>/system license print</code> → <code>level: free</code>।</p>
+    <p><strong>রুট কজ:</strong> ফ্রি লাইসেন্স ১ Mbps সীমা।</p>
+    <p><strong>সমাধান:</strong> P1 লাইসেন্স কিনে <code>/system license renew</code> চালান।</p>
+    <p><strong>প্রতিরোধ:</strong> মনিটরিং সিস্টেমে লাইসেন্স স্তর ও থ্রুপুট সীমা অ্যালার্ট সেট করুন।</p>
+  </div>
+</section>
+
+<!-- SECTION 26: BEGINNER LAB -->
+<section class="section" id="s26" data-category="lab">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">২৬</span> বিগিনার ল্যাব</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <p><span class="badge beginner">Beginner</span></p>
+    <h3>উদ্দেশ্য</h3>
+    <p>VirtualBox-এ CHR ইনস্টল করে প্রথম বুট এবং NAT-এর মাধ্যমে ইন্টারনেট অ্যাক্সেস নিশ্চিত করা।</p>
+
+    <h3>টপোলজি</h3>
+    <div class="diagram">
+      <span class="box">Host PC</span>
+      <span class="arrow">→</span>
+      <span class="box">VirtualBox NAT</span>
+      <span class="arrow">→</span>
+      <span class="box">CHR (ether1)</span>
+      <span class="arrow">→</span>
+      <span class="box">Internet</span>
+    </div>
+
+    <h3>ধাপ</h3>
+    <ol>
+      <li>CHR VDI ডাউনলোড করুন।</li>
+      <li>VirtualBox-এ নতুন VM তৈরি করুন (Linux/Other Linux 64-bit)।</li>
+      <li>VDI অ্যাটাচ করুন, RAM 1024 MB।</li>
+      <li>Network → Adapter 1 → NAT।</li>
+      <li>VM চালু করুন, admin/blank দিয়ে লগইন করুন।</li>
+      <li><code>/interface print</code> দিয়ে ether1 দেখুন।</li>
+      <li><code>/ip dhcp-client add interface=ether1 disabled=no</code></li>
+      <li><code>/ip address print</code> দিয়ে IP যাচাই করুন।</li>
+      <li><code>/ping 8.8.8.8</code> দিয়ে ইন্টারনেট টেস্ট করুন।</li>
+    </ol>
+
+    <h3>সফলতার মাপকাঠি</h3>
+    <ul class="checklist">
+      <li><input type="checkbox" id="lab1-1"><label for="lab1-1">VM বুট হয়েছে</label></li>
+      <li><input type="checkbox" id="lab1-2"><label for="lab1-2">ether1 দৃশ্যমান</label></li>
+      <li><input type="checkbox" id="lab1-3"><label for="lab1-3">IP পাওয়া গেছে</label></li>
+      <li><input type="checkbox" id="lab1-4"><label for="lab1-4">8.8.8.8-এ ping সফল</label></li>
+    </ul>
+
+    <h3>ক্লিনআপ</h3>
+    <p>VM বন্ধ করুন এবং VirtualBox থেকে মুছে ফেলুন অথবা স্ন্যাপশট নিন।</p>
+  </div>
+</section>
+
+<!-- SECTION 27: INTERMEDIATE LAB -->
+<section class="section" id="s27" data-category="lab">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">২৭</span> ইন্টারমিডিয়েট ল্যাব</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <p><span class="badge intermediate">Intermediate</span></p>
+    <h3>উদ্দেশ্য</h3>
+    <p>দুটি নেটওয়ার্ক অ্যাডাপ্টার (NAT + Host-Only) কনফিগার করে WinBox অ্যাক্সেস নিশ্চিত করা।</p>
+
+    <h3>টপোলজি</h3>
+    <div class="diagram">
+      <span class="box">Host (192.168.56.1)</span>
+      <span class="arrow">← Host-Only →</span>
+      <span class="box">CHR ether2 (192.168.56.2)</span><br><br>
+      <span class="box">CHR ether1 (NAT 10.0.2.15)</span>
+      <span class="arrow">→</span>
+      <span class="box">Internet</span>
+    </div>
+
+    <h3>ধাপ</h3>
+    <ol>
+      <li>VirtualBox → Settings → Network → Adapter 2 → Host-Only।</li>
+      <li>CHR-এ <code>/ip address add address=192.168.56.2/24 interface=ether2</code>।</li>
+      <li>হোস্ট থেকে WinBox চালু করে <code>192.168.56.2</code>-এ সংযোগ করুন।</li>
+      <li>ডিফল্ট admin পাসওয়ার্ড পরিবর্তন করুন।</li>
+      <li>ফায়ারওয়াল রুল যোগ করে ether1 থেকে WinBox ব্লক করুন।</li>
+    </ol>
+
+    <h3>সফলতার মাপকাঠি</h3>
+    <ul class="checklist">
+      <li><input type="checkbox" id="lab2-1"><label for="lab2-1">Host-Only অ্যাডাপ্টার কাজ করছে</label></li>
+      <li><input type="checkbox" id="lab2-2"><label for="lab2-2">WinBox সংযোগ সফল</label></li>
+      <li><input type="checkbox" id="lab2-3"><label for="lab2-3">admin পাসওয়ার্ড পরিবর্তিত</label></li>
+      <li><input type="checkbox" id="lab2-4"><label for="lab2-4">firewall রুল প্রয়োগ</label></li>
+    </ul>
+  </div>
+</section>
+
+<!-- SECTION 28: ADVANCED LAB -->
+<section class="section" id="s28" data-category="lab">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">২৮</span> অ্যাডভান্সড ল্যাব</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <p><span class="badge advanced">Advanced</span></p>
+    <h3>উদ্দেশ্য</h3>
+    <p>CHR-কে DHCP সার্ভার হিসেবে কনফিগার করে Internal নেটওয়ার্কে অন্য VM-কে IP দেওয়া।</p>
+
+    <h3>টপোলজি</h3>
+    <div class="diagram">
+      <span class="box">CHR ether3 (10.10.10.1/24)</span>
+      <span class="arrow">→ Internal Network →</span>
+      <span class="box">Client VM (DHCP)</span>
+    </div>
+
+    <h3>ধাপ</h3>
+    <ol>
+      <li>VirtualBox-এ Adapter 3 → Internal Network (নাম: "labnet")।</li>
+      <li>CHR-এ: <code>/ip address add address=10.10.10.1/24 interface=ether3</code></li>
+      <li><code>/ip pool add name=lab-pool ranges=10.10.10.100-10.10.10.200</code></li>
+      <li><code>/ip dhcp-server add interface=ether3 address-pool=lab-pool disabled=no</code></li>
+      <li><code>/ip dhcp-server network add address=10.10.10.0/24 gateway=10.10.10.1</code></li>
+      <li>Client VM বুট করে DHCP থেকে IP পেয়েছে কিনা দেখুন।</li>
+    </ol>
+
+    <h3>চ্যালেঞ্জ</h3>
+    <p>ক্লায়েন্ট VM থেকে ইন্টারনেট অ্যাক্সেস নিশ্চিত করতে CHR-এ NAT (masquerade) কনফিগার করুন।</p>
+  </div>
+</section>
+
+<!-- SECTION 29: INTERVIEW QUESTIONS -->
+<section class="section" id="s29" data-category="concept">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">২৯</span> ইন্টারভিউ প্রশ্ন</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>বিগিনার</h3>
+    <p><strong>প্রশ্ন ১:</strong> CHR কী?<br>
+    <strong>উত্তর:</strong> Cloud Hosted Router — RouterOS-এর ভার্চুয়াল সংস্করণ।</p>
+    <p><strong>প্রশ্ন ২:</strong> CHR-এর ডিফল্ট লগইন কী?<br>
+    <strong>উত্তর:</strong> admin, পাসওয়ার্ড খালি।</p>
+    <p><strong>প্রশ্ন ৩:</strong> VirtualBox-এ CHR-এর জন্য কোন ডিস্ক ফরম্যাট?<br>
+    <strong>উত্তর:</strong> VDI (VirtualBox Disk Image)।</p>
+
+    <h3>ইন্টারমিডিয়েট</h3>
+    <p><strong>প্রশ্ন ৪:</strong> NAT এবং Bridged মোডের পার্থক্য?<br>
+    <strong>উত্তর:</strong> NAT-এ VM হোস্টের মাধ্যমে ইন্টারনেট পায়, বাইরে থেকে অ্যাক্সেসযোগ্য নয়। Bridged-এ VM ফিজিক্যাল নেটওয়ার্কে সরাসরি দেখা যায়।</p>
+    <p><strong>প্রশ্ন ৫:</strong> ফ্রি লাইসেন্সের থ্রুপুট সীমা কত?<br>
+    <strong>উত্তর:</strong> ১ Mbps প্রতি ইন্টারফেস।</p>
+    <p><strong>প্রশ্ন ৬:</strong> ট্রায়াল লাইসেন্স কীভাবে চালু করবেন?<br>
+    <strong>উত্তর:</strong> <code>/system/license/renew account=... password=... level=p1</code></p>
+
+    <h3>অ্যাডভান্সড</h3>
+    <p><strong>প্রশ্ন ৭:</strong> একই VDI থেকে একাধিক VM বানালে লাইসেন্স সমস্যা কেন হয়?<br>
+    <strong>উত্তর:</strong> System ID একই থাকে। <code>/system/license/generate-new-id</code> দিয়ে নতুন ID তৈরি করতে হয় (শুধু ফ্রি লাইসেন্সে)।</p>
+    <p><strong>প্রশ্ন ৮:</strong> ট্রায়াল মেয়াদ শেষ হলে কী হয়?<br>
+    <strong>উত্তর:</strong> CHR চলতে থাকে কিন্তু ১ Mbps-এ ফিরে যায় এবং RouterOS আপগ্রেড করা যায় না।</p>
+  </div>
+</section>
+
+<!-- SECTION 30: CHALLENGE -->
+<section class="section" id="s30" data-category="lab">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">৩০</span> চ্যালেঞ্জ</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <p><strong>পরিস্থিতি:</strong> আপনাকে একটি VirtualBox হোস্টে CHR কনফিগার করতে বলা হলো যেখানে:</p>
+    <ul>
+      <li>ether1 = NAT (ইন্টারনেট)</li>
+      <li>ether2 = Host-Only (ম্যানেজমেন্ট, 192.168.56.0/24)</li>
+      <li>ether3 = Internal (ল্যাব নেটওয়ার্ক, 10.10.10.0/24, DHCP সার্ভার)</li>
+    </ul>
+    <p>শর্ত: WinBox শুধুমাত্র Host-Only থেকে অ্যাক্সেসযোগ্য হবে। Internal নেটওয়ার্কের ক্লায়েন্টরা NAT-এর মাধ্যমে ইন্টারনেট পাবে। admin পাসওয়ার্ড অবশ্যই পরিবর্তন করতে হবে।</p>
+
+    <details>
+      <summary style="cursor:pointer; color:var(--accent); font-weight:600;">💡 হিন্ট ১</summary>
+      <p>NAT-এর জন্য <code>/ip firewall nat add chain=srcnat out-interface=ether1 action=masquerade</code></p>
+    </details>
+    <details>
+      <summary style="cursor:pointer; color:var(--accent); font-weight:600;">💡 হিন্ট ২</summary>
+      <p>WinBox সীমিত করতে <code>/ip service set winbox address=192.168.56.0/24</code></p>
+    </details>
+    <details>
+      <summary style="cursor:pointer; color:var(--accent); font-weight:600;">💡 হিন্ট ৩</summary>
+      <p>DHCP সার্ভার ether3-এ দিন, pool 10.10.10.100-200, gateway 10.10.10.1</p>
+    </details>
+  </div>
+</section>
+
+<!-- SECTION 31: CHEAT SHEET -->
+<section class="section" id="s31" data-category="command">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">৩১</span> চিট শিট</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>কমান্ড</th><th>উদ্দেশ্য</th><th>কখন</th></tr></thead>
+        <tbody>
+          <tr><td><code>/interface print</code></td><td>ইন্টারফেস দেখুন</td><td>প্রথম বুট / সমস্যা</td></tr>
+          <tr><td><code>/ip address print</code></td><td>IP দেখুন</td><td>নেটওয়ার্কিং চেক</td></tr>
+          <tr><td><code>/ip dhcp-client add interface=ether1</code></td><td>DHCP থেকে IP নিন</td><td>NAT মোড</td></tr>
+          <tr><td><code>/system license print</code></td><td>লাইসেন্স দেখুন</td><td>থ্রুপুট সমস্যা</td></tr>
+          <tr><td><code>/system license renew</code></td><td>ট্রায়াল/পেইড চালু</td><td>ফ্রি লাইসেন্স আপগ্রেড</td></tr>
+          <tr><td><code>/export compact</code></td><td>কনফিগারেশন ব্যাকআপ</td><td>পরিবর্তনের আগে</td></tr>
+          <tr><td><code>/log print</code></td><td>লগ দেখুন</td><td>Troubleshooting</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 32: MASTER CHECKLIST -->
+<section class="section" id="s32" data-category="verify">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">৩২</span> মাস্টার কমান্ড চেকলিস্ট</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>Discovery</h3>
+    <ul class="checklist">
+      <li><input type="checkbox" id="mc-1"><label for="mc-1"><code>/interface print</code></label></li>
+      <li><input type="checkbox" id="mc-2"><label for="mc-2"><code>/ip address print</code></label></li>
+      <li><input type="checkbox" id="mc-3"><label for="mc-3"><code>/system resource print</code></label></li>
+    </ul>
+    <h3>Configuration</h3>
+    <ul class="checklist">
+      <li><input type="checkbox" id="mc-4"><label for="mc-4"><code>/ip dhcp-client add</code></label></li>
+      <li><input type="checkbox" id="mc-5"><label for="mc-5"><code>/ip address add</code></label></li>
+      <li><input type="checkbox" id="mc-6"><label for="mc-6"><code>/ip firewall filter add</code></label></li>
+    </ul>
+    <h3>Verification</h3>
+    <ul class="checklist">
+      <li><input type="checkbox" id="mc-7"><label for="mc-7"><code>/ping 8.8.8.8</code></label></li>
+      <li><input type="checkbox" id="mc-8"><label for="mc-8"><code>/system license print</code></label></li>
+      <li><input type="checkbox" id="mc-9"><label for="mc-9"><code>/interface monitor-traffic ether1</code></label></li>
+    </ul>
+    <h3>Recovery</h3>
+    <ul class="checklist">
+      <li><input type="checkbox" id="mc-10"><label for="mc-10"><code>/export compact</code></label></li>
+      <li><input type="checkbox" id="mc-11"><label for="mc-11">VirtualBox Snapshot</label></li>
+    </ul>
+  </div>
+</section>
+
+<!-- SECTION 33: FINAL CHECKLIST -->
+<section class="section" id="s33" data-category="verify">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">৩৩</span> ফাইনাল চেকলিস্ট</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <p>এই হ্যান্ডবুক শেষ করার পর আপনি নিম্নলিখিত কাজগুলো করতে সক্ষম হবেন:</p>
+    <ul class="checklist">
+      <li><input type="checkbox" id="fc-1"><label for="fc-1">VirtualBox-এ CHR ইনস্টল করতে পারবেন</label></li>
+      <li><input type="checkbox" id="fc-2"><label for="fc-2">NAT/Host-Only/Bridged নেটওয়ার্কিং বুঝতে পারবেন</label></li>
+      <li><input type="checkbox" id="fc-3"><label for="fc-3">প্রাথমিক IP কনফিগারেশন করতে পারবেন</label></li>
+      <li><input type="checkbox" id="fc-4"><label for="fc-4">লাইসেন্স স্ট্যাটাস চেক ও ট্রায়াল চালু করতে পারবেন</label></li>
+      <li><input type="checkbox" id="fc-5"><label for="fc-5">WinBox/SSH অ্যাক্সেস কনফিগার করতে পারবেন</label></li>
+      <li><input type="checkbox" id="fc-6"><label for="fc-6">সাধারণ সমস্যা Troubleshoot করতে পারবেন</label></li>
+      <li><input type="checkbox" id="fc-7"><label for="fc-7">কনফিগারেশন এক্সপোর্ট ও স্ন্যাপশট নিতে পারবেন</label></li>
+    </ul>
+
+    <div class="callout success">
+      <span class="callout-label">✅ অভিনন্দন</span>
+      আপনি MikroTik CHR on VirtualBox-এর সম্পূর্ণ হ্যান্ডবুক শেষ করেছেন। পরবর্তী পদক্ষেপ: CHR-এ RouterOS রাউটিং (OSPF/BGP) বা ফায়ারওয়াল শিখুন।
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ========== BACK TO TOP ========== -->
+<button class="back-to-top" id="backToTop" aria-label="উপরে ফিরে যান">↑</button>
+
+<!-- ========== JAVASCRIPT ========== -->
+<script>
+(function() {
+  'use strict';
+
+  // ---------- THEME TOGGLE ----------
+  const themeToggle = document.getElementById('themeToggle');
+  const body = document.body;
+
+  function setTheme(theme) {
+    body.setAttribute('data-theme', theme);
+    themeToggle.textContent = theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
+    try { localStorage.setItem('chr-theme', theme); } catch(e) {}
+  }
+
+  try {
+    const saved = localStorage.getItem('chr-theme');
+    if (saved) setTheme(saved);
+  } catch(e) {}
+
+  themeToggle.addEventListener('click', function() {
+    const current = body.getAttribute('data-theme');
+    setTheme(current === 'dark' ? 'light' : 'dark');
+  });
+
+  // ---------- SECTION COLLAPSE ----------
+  const sections = document.querySelectorAll('.section');
+
+  function toggleSection(section) {
+    const header = section.querySelector('.section-header');
+    const isOpen = section.classList.contains('open');
+    if (isOpen) {
+      section.classList.remove('open');
+      header.setAttribute('aria-expanded', 'false');
+    } else {
+      section.classList.add('open');
+      header.setAttribute('aria-expanded', 'true');
+    }
+    updateProgress();
+  }
+
+  sections.forEach(function(section) {
+    const header = section.querySelector('.section-header');
+    header.addEventListener('click', function() { toggleSection(section); });
+    header.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleSection(section);
+      }
+    });
+  });
+
+  // ---------- EXPAND / COLLAPSE ALL ----------
+  document.getElementById('expandAll').addEventListener('click', function() {
+    sections.forEach(function(s) {
+      s.classList.add('open');
+      s.querySelector('.section-header').setAttribute('aria-expanded', 'true');
+    });
+    updateProgress();
+  });
+
+  document.getElementById('collapseAll').addEventListener('click', function() {
+    sections.forEach(function(s) {
+      s.classList.remove('open');
+      s.querySelector('.section-header').setAttribute('aria-expanded', 'false');
+    });
+    updateProgress();
+  });
+
+  // ---------- PROGRESS ----------
+  function updateProgress() {
+    const total = sections.length;
+    const opened = document.querySelectorAll('.section.open').length;
+    const pct = total > 0 ? Math.round((opened / total) * 100) : 0;
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent =
+      'অগ্রগতি: ' + pct + '% (' + opened + 'টি সেকশন দেখা হয়েছে, মোট ' + total + 'টি)';
+  }
+
+  // ---------- SEARCH ----------
+  const searchInput = document.getElementById('searchInput');
+  let searchTimeout;
+
+  searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(function() {
+      performSearch();
+    }, 250);
+  });
+
+  function performSearch() {
+    const query = searchInput.value.toLowerCase().trim();
+    let visibleCount = 0;
+
+    sections.forEach(function(section) {
+      const text = section.textContent.toLowerCase();
+      const matches = query === '' || text.includes(query);
+      if (matches) {
+        section.classList.remove('hidden');
+        visibleCount++;
+        if (query !== '') {
+          section.classList.add('open');
+          section.querySelector('.section-header').setAttribute('aria-expanded', 'true');
+        }
+      } else {
+        section.classList.add('hidden');
+      }
+    });
+
+    // Remove existing no-results
+    const existing = document.querySelector('.no-results');
+    if (existing) existing.remove();
+
+    if (visibleCount === 0 && query !== '') {
+      const noResults = document.createElement('div');
+      noResults.className = 'no-results';
+      noResults.innerHTML = 'কোনো ফল পাওয়া যায়নি: "<strong>' + escapeHtml(query) + '</strong>"<br>অনুগ্রহ করে অন্য শব্দ দিয়ে চেষ্টা করুন।';
+      document.getElementById('mainContent').appendChild(noResults);
+    }
+
+    updateProgress();
+  }
+
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.appendChild(document.createTextNode(str));
+    return div.innerHTML;
+  }
+
+  // ---------- FILTER ----------
+  const filterBtns = document.querySelectorAll('.filter-btn');
+  filterBtns.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      filterBtns.forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      const filter = btn.dataset.filter;
+
+      sections.forEach(function(section) {
+        const cats = (section.dataset.category || '').split(',');
+        if (filter === 'all' || cats.includes(filter)) {
+          section.classList.remove('hidden');
+        } else {
+          section.classList.add('hidden');
+        }
+      });
+
+      // Clear search when filtering
+      if (searchInput.value.trim() !== '') {
+        searchInput.value = '';
+        performSearch();
+      }
+    });
+  });
+
+  // ---------- COPY BUTTONS ----------
+  window.copyCode = function(btn) {
+    var wrapper = btn.closest('.code-wrapper');
+    var codeEl = wrapper.querySelector('pre code') || wrapper.querySelector('pre');
+    var text = codeEl.textContent;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function() {
+        btn.textContent = 'কপি হয়েছে ✓';
+        btn.classList.add('copied');
+        setTimeout(function() {
+          btn.textContent = 'কপি';
+          btn.classList.remove('copied');
+        }, 2000);
+      }).catch(function() {
+        fallbackCopy(text, btn);
+      });
+    } else {
+      fallbackCopy(text, btn);
+    }
+  };
+
+  function fallbackCopy(text, btn) {
+    try {
+      var textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      btn.textContent = 'কপি হয়েছে ✓';
+      btn.classList.add('copied');
+      setTimeout(function() {
+        btn.textContent = 'কপি';
+        btn.classList.remove('copied');
+      }, 2000);
+    } catch (err) {
+      btn.textContent = 'কপি ব্যর্থ';
+      setTimeout(function() { btn.textContent = 'কপি'; }, 2000);
+    }
+  }
+
+  // ---------- TOC TOGGLE (Mobile) ----------
+  const tocToggle = document.getElementById('tocToggle');
+  const tocNav = document.getElementById('tocNav');
+
+  tocToggle.addEventListener('click', function() {
+    const isVisible = tocNav.classList.contains('show');
+    tocNav.classList.toggle('show');
+    tocToggle.setAttribute('aria-expanded', !isVisible);
+    tocToggle.textContent = isVisible ? '📑 সূচিপত্র দেখুন' : '📑 সূচিপত্র লুকান';
+  });
+
+  // ---------- TOC ACTIVE HIGHLIGHT ----------
+  const tocLinks = document.querySelectorAll('.toc-list a');
+
+  function highlightTOC() {
+    var scrollPos = window.scrollY + 100;
+    var activeId = '';
+
+    sections.forEach(function(section) {
+      if (section.offsetTop <= scrollPos && section.offsetTop + section.offsetHeight > scrollPos) {
+        activeId = section.id;
+      }
+    });
+
+    tocLinks.forEach(function(link) {
+      link.classList.remove('active');
+      if (link.getAttribute('href') === '#' + activeId) {
+        link.classList.add('active');
+      }
+    });
+  }
+
+  window.addEventListener('scroll', highlightTOC, { passive: true });
+
+  // ---------- BACK TO TOP ----------
+  const backToTop = document.getElementById('backToTop');
+
+  window.addEventListener('scroll', function() {
+    if (window.scrollY > 400) {
+      backToTop.classList.add('visible');
+    } else {
+      backToTop.classList.remove('visible');
+    }
+  }, { passive: true });
+
+  backToTop.addEventListener('click', function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // ---------- INITIAL STATE ----------
+  updateProgress();
+  highlightTOC();
+
+})();
+</script>
+
+</body>
+</html>
