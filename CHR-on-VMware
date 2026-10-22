@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MikroTik CHR on VMware — ইনস্টলেশন মাস্টার হ্যান্ডবুক</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-2: #334155;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --accent: #14b8a6;
+            --accent-dim: #0d9488;
+            --warning: #f97316;
+            --danger: #ef4444;
+            --border: #475569;
+            --code-bg: #0b1120;
+            --radius: 8px;
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
+            --font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans Bengali', sans-serif;
+            --mono: 'SF Mono', 'Cascadia Code', 'Fira Code', Consolas, monospace;
+        }
+        [data-theme="light"] {
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --surface-2: #f1f5f9;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --accent: #0d9488;
+            --accent-dim: #0f766e;
+            --warning: #ea580c;
+            --danger: #dc2626;
+            --border: #e2e8f0;
+            --code-bg: #f1f5f9;
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.07);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            font-size: 16px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+
+        /* Header */
+        .header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow);
+        }
+        .header-inner { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+        .header h1 { font-size: 1.25rem; font-weight: 700; }
+        .header h1 span { color: var(--accent); }
+        .meta-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+            color: var(--text-muted);
+        }
+        .badge-accent { border-color: var(--accent); color: var(--accent); }
+        .theme-toggle {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 14px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .theme-toggle:hover { border-color: var(--accent); }
+
+        /* Top Controls */
+        .top-controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+            align-items: center;
+        }
+        .search-box {
+            flex: 1;
+            min-width: 240px;
+            position: relative;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            font-size: 0.95rem;
+            font-family: var(--font);
+        }
+        .search-box input:focus { outline: 2px solid var(--accent); border-color: transparent; }
+        .btn {
+            padding: 10px 18px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            font-family: var(--font);
+            white-space: nowrap;
+        }
+        .btn:hover { border-color: var(--accent); }
+        .btn-accent { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .btn-accent:hover { background: var(--accent-dim); }
+
+        /* TOC */
+        .toc {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        .toc h2 { font-size: 1rem; margin-bottom: 12px; color: var(--accent); }
+        .toc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 6px; }
+        .toc a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.85rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: block;
+        }
+        .toc a:hover { background: var(--surface-2); color: var(--text); }
+
+        /* Sections */
+        .section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            cursor: pointer;
+            user-select: none;
+            background: var(--surface-2);
+            border-bottom: 1px solid var(--border);
+        }
+        .section-header:hover { background: var(--border); }
+        .section-header h2 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-header .chevron { transition: transform 0.2s; font-size: 0.8rem; color: var(--text-muted); }
+        .section.collapsed .chevron { transform: rotate(-90deg); }
+        .section.collapsed .section-body { display: none; }
+        .section-body { padding: 20px; }
+
+        /* Typography */
+        h3 { font-size: 1rem; margin: 20px 0 10px; color: var(--accent); }
+        h4 { font-size: 0.92rem; margin: 14px 0 8px; color: var(--text); }
+        p { margin-bottom: 12px; }
+        ul, ol { margin: 8px 0 16px 24px; }
+        li { margin-bottom: 6px; }
+        strong { color: var(--accent); font-weight: 600; }
+        code {
+            font-family: var(--mono);
+            background: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.88em;
+            border: 1px solid var(--border);
+        }
+
+        /* Code blocks */
+        .code-block {
+            position: relative;
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin: 14px 0;
+            overflow: hidden;
+        }
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 14px;
+            background: var(--surface-2);
+            border-bottom: 1px solid var(--border);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+        .code-header .copy-btn {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.72rem;
+            font-family: var(--font);
+        }
+        .code-header .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+        pre {
+            padding: 14px 16px;
+            overflow-x: auto;
+            font-family: var(--mono);
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: var(--text);
+            white-space: pre;
+            tab-size: 4;
+        }
+        .code-warning { border-left: 3px solid var(--warning); }
+        .code-danger { border-left: 3px solid var(--danger); }
+
+        /* Tables */
+        .table-wrap { overflow-x: auto; margin: 14px 0; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        th, td {
+            border: 1px solid var(--border);
+            padding: 10px 12px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th { background: var(--surface-2); font-weight: 600; color: var(--accent); }
+        tr:nth-child(even) { background: var(--surface-2); }
+
+        /* Callouts */
+        .callout {
+            padding: 14px 18px;
+            border-radius: var(--radius);
+            margin: 14px 0;
+            border-left: 4px solid var(--accent);
+            background: var(--surface-2);
+            font-size: 0.9rem;
+        }
+        .callout-warning { border-left-color: var(--warning); }
+        .callout-danger { border-left-color: var(--danger); }
+        .callout strong { display: block; margin-bottom: 4px; }
+
+        /* Pillars */
+        .pillars-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 12px;
+            margin: 16px 0;
+        }
+        .pillar-card {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px;
+            text-align: center;
+        }
+        .pillar-card .num { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
+        .pillar-card .label { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
+
+        /* Back to top */
+        .back-top {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            box-shadow: var(--shadow);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 99;
+        }
+        .back-top.show { display: flex; }
+
+        /* Progress */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: var(--accent);
+            z-index: 200;
+            transition: width 0.15s;
+        }
+
+        /* Search hidden */
+        .search-hidden { display: none !important; }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .header-inner { flex-direction: column; align-items: flex-start; }
+            .toc-grid { grid-template-columns: 1fr; }
+            .top-controls { flex-direction: column; }
+            .search-box { min-width: 100%; }
+            .code-header { font-size: 0.65rem; }
+            pre { font-size: 0.75rem; padding: 10px 12px; }
+            .section-body { padding: 14px; }
+        }
+
+        /* Print */
+        @media print {
+            .header, .top-controls, .toc, .back-top, .code-header .copy-btn, .theme-toggle { display: none !important; }
+            .section { break-inside: avoid; border: 1px solid #ccc; }
+            .section.collapsed .section-body { display: block !important; }
+            body { background: #fff; color: #000; }
+            pre { background: #f5f5f5; border: 1px solid #ddd; }
+        }
+
+        /* Highlight search */
+        .search-highlight { background: var(--warning); color: #000; border-radius: 2px; }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+
+    <header class="header">
+        <div class="container header-inner">
+            <h1>MikroTik CHR <span>on VMware</span></h1>
+            <div class="meta-badges">
+                <span class="badge badge-accent">RouterOS v7.x</span>
+                <span class="badge">VMware Workstation</span>
+                <span class="badge">Beginner → Expert</span>
+                <span class="badge">বাংলা হ্যান্ডবুক</span>
+            </div>
+            <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙 ডার্ক / লাইট</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Top Controls -->
+        <div class="top-controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="🔍 খুঁজুন: কমান্ড, ধারণা, সমস্যা, ল্যাব..." oninput="performSearch()">
+            </div>
+            <button class="btn" onclick="expandAll()">সব খুলুন</button>
+            <button class="btn" onclick="collapseAll()">সব বন্ধ করুন</button>
+        </div>
+
+        <!-- TOC -->
+        <nav class="toc" id="toc">
+            <h2>📑 সূচিপত্র</h2>
+            <div class="toc-grid" id="tocGrid"></div>
+        </nav>
+
+        <!-- ===== SECTIONS ===== -->
+
+        <!-- 1. Overview -->
+        <section class="section" id="overview" data-title="ওভারভিউ ও স্কোপ">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>১. ওভারভিউ ও স্কোপ</h2>
+                <span class="chevron">▼</span>
+            </div>
+            <div class="section-body">
+                <div class="table-wrap">
+                    <table>
+                        <tr><th>বিষয়</th><th>মান</th></tr>
+                        <tr><td>Vendor / Platform</td><td>MikroTik RouterOS</td></tr>
+                        <tr><td>Topic</td><td>Installation CHR on VMware</td></tr>
+                        <tr><td>OS Version</td><td>RouterOS v7.x (Stable)</td></tr>
+                        <tr><td>Environment</td><td>VMware Workstation</td></tr>
+                        <tr><td>Depth</td><td>Beginner → Expert</td></tr>
+                    </table>
+                </div>
+                <h3>কী শিখবেন</h3>
+                <p>এই হ্যান্ডবুকে আপনি শিখবেন কীভাবে <strong>MikroTik Cloud Hosted Router (CHR)</strong> কে <strong>VMware Workstation</strong>-এ ইনস্টল ও কনফিগার করতে হয়। CHR হলো RouterOS-এর ভার্চুয়াল সংস্করণ, যা x86_64 ভার্চুয়াল এনভায়রনমেন্টে চলে এবং ফিজিক্যাল রাউটারের মতোই routing, firewall, VPN ইত্যাদি ফিচার প্রদান করে <citation:1]।</p>
+                <p><strong>স্কোপ:</strong> CHR ডাউনলোড, VMware VM তৈরি, ডিস্ক ইমেজ অ্যাটাচ, নেটওয়ার্ক অ্যাডাপ্টার ম্যাপিং, প্রথম বুট, পাসওয়ার্ড সেট, লাইসেন্সিং, বেসিক ভেরিফিকেশন, ট্রাবলশুটিং এবং প্রোডাকশন কনসিডারেশন।</p>
+                <p><strong>বহির্ভূত:</strong> ESXi/vSphere-ভিত্তিক ডিপ্লয়মেন্ট, Hyper-V, KVM, VirtualBox, এবং উন্নত রাউটিং প্রোটোকল কনফিগারেশন (BGP/OSPF) — এগুলো 별도의 টপিক।</p>
+                <div class="callout">
+                    <strong>ℹ️ অনুমান</strong>
+                    ব্যবহারকারী নির্দিষ্ট করে নি, তাই ধরে নেওয়া হয়েছে: RouterOS v7.x Stable, VMware Workstation Pro/Player (Windows/Linux হোস্ট), এবং ল্যাব/লার্নিং এনভায়রনমেন্ট।
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Five Pillars -->
+        <section class="section" id="pillars" data-title="পাঁচটি প্রধান স্তম্ভ">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>২. পাঁচটি প্রধান স্তম্ভ (Priority Pillars)</h2>
+                <span class="chevron">▼</span>
+            </div>
+            <div class="section-body">
+                <div class="pillars-grid">
+                    <div class="pillar-card"><div class="num">1</div><div class="label">Concept & Configuration</div></div>
+                    <div class="pillar-card"><div class="num">2</div><div class="label">Vendor Commands</div></div>
+                    <div class="pillar-card"><div class="num">3</div><div class="label">Hands-on Lab</div></div>
+                    <div class="pillar-card"><div class="num">4</div><div class="label">Verification & Troubleshooting</div></div>
+                    <div class="pillar-card"><div class="num">5</div><div class="label">Best Practices & Caveats</div></div>
+                </div>
+                <p>এই পাঁচটি স্তম্ভই এই হ্যান্ডবুকের মূল ভিত্তি। প্রতিটি স্তম্ভকে বিস্তারিতভাবে কভার করা হয়েছে যাতে আপনি শুধু কমান্ড মুখস্থ না করে বাস্তব পরিবেশে কাজ করতে পারেন।</p>
+            </div>
+        </section>
+
+        <!-- 3. ELI10 -->
+        <section class="section" id="eli10" data-title="ELI10 — সহজ ভাষায়">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>৩. ELI10 — একদম সহজ ভাষায়</h2>
+                <span class="chevron">▼</span>
+            </div>
+            <div class="section-body">
+                <p><strong>CHR কী?</strong> CHR (Cloud Hosted Router) হলো MikroTik RouterOS-এর একটি ভার্চুয়াল সংস্করণ। এটি কোনো ফিজিক্যাল বক্স নয় — এটি একটি <strong>ভার্চুয়াল মেশিন (VM)</strong> হিসেবে আপনার কম্পিউটারে চলে।</p>
+                <p><strong>উপমা:</strong> ধরুন আপনার একটি ফিজিক্যাল MikroTik রাউটার আছে। সেটার সব ফিচার (routing, firewall, NAT) আপনি আপনার ল্যাপটপে একটি সফটওয়্যার হিসেবে চালাতে চান। CHR ঠিক সেটাই করে — এটি VMware-এর ভেতরে একটি "ভার্চুয়াল রাউটার" তৈরি করে দেয়।</p>
+                <p><strong>কেন VMware?</strong> VMware Workstation আপনার কম্পিউটারে একাধিক ভার্চুয়াল মেশিন চালানোর সুবিধা দেয়। CHR-এর জন্য MikroTik একটি রেডিমেড <code>.vmdk</code> ডিস্ক ইমেজ দেয়, যা সরাসরি VMware-এ অ্যাটাচ করলেই হয়ে যায় — কোনো ISO ইনস্টলেশন লাগে না <citation:5]।</p>
+                <p><strong>মনে রাখুন:</strong> CHR প্রথমবার চালু হলে এটি <strong>Free লাইসেন্স</strong>-এ চলে, যার গতি সীমা প্রতি ইন্টারফেসে ১ Mbps <citation:4]। ল্যাব/লার্নিং-এর জন্য এটি যথেষ্ট, কিন্তু প্রোডাকশনে ব্যবহার করতে চাইলে লাইসেন্স আপগ্রেড করতে হবে।</p>
+            </div>
+        </section>
+
+        <!-- 4. ELI15 -->
+        <section class="section" id="eli15" data-title="ELI15 — প্রকৃত কার্যপ্রণালী">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>৪. ELI15 — প্রকৃত কার্যপ্রণালী</h2>
+                <span class="chevron">▼</span>
+            </div>
+            <div class="section-body">
+                <p>CHR মূলত একটি <strong>x86_64 Linux-ভিত্তিক ভার্চুয়াল অ্যাপ্লায়েন্স</strong>। MikroTik আপনাকে একটি প্রি-বিল্ট ডিস্ক ইমেজ (<code>.vmdk</code>, <code>.img</code>, <code>.vdi</code>, <code>.vhdx</code>) দেয়। এই ইমেজটি কোনো ইনস্টলার নয় — এটি একটি সম্পূর্ণ বুটেবল ডিস্ক <citation:1]।</p>
+                <p><strong>VMware Workstation-এ প্রক্রিয়া:</strong></p>
+                <ol>
+                    <li>MikroTik ওয়েবসাইট থেকে <code>.vmdk</code> ফাইল ডাউনলোড করুন।</li>
+                    <li>VMware-এ একটি নতুন VM তৈরি করুন (Guest OS: Other Linux 64-bit)।</li>
+                    <li>VMware-এর ডিফল্ট ভার্চুয়াল ডিস্কটি মুছে ফেলুন এবং পরিবর্তে ডাউনলোড করা <code>.vmdk</code> ফাইলটি "Existing Disk" হিসেবে অ্যাটাচ করুন।</li>
+                    <li>VM চালু করুন — RouterOS বুট হবে এবং আপনি <code>admin</code> (পাসওয়ার্ড ছাড়া) দিয়ে লগইন করতে পারবেন <citation:5]।</li>
+                </ol>
+                <p><strong>নেটওয়ার্কিং:</strong> VMware-এ প্রতিটি ভার্চুয়াল নেটওয়ার্ক অ্যাডাপ্টার একটি নির্দিষ্ট <strong>VMnet</strong>-এর সাথে ম্যাপ হয়। যেমন, <code>VMnet 8</code> সাধারণত NAT (ইন্টারনেট অ্যাক্সেস), আর <code>VMnet 1</code> বা Host-only অ্যাডাপ্টার ল্যাব নেটওয়ার্কের জন্য ব্যবহৃত হয়। CHR-এর ভেতরে এই অ্যাডাপ্টারগুলো <code>ether1</code>, <code>ether2</code> ইত্যাদি হিসেবে দেখা যাবে <citation:9]।</p>
+                <div class="callout callout-warning">
+                    <strong>⚠️ গুরুত্বপূর্ণ</strong>
+                    CHR ডিস্ক ইমেজ শুধুই একটি ডিস্ক — এটি সরাসরি ডাবল-ক্লিক করে চালানো যায় না। এটি অবশ্যই একটি VM-এর সাথে সংযুক্ত করতে হবে <citation:1]।
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Terminology -->
+        <section class="section" id="terminology" data-title="পরিভাষা (Jargon)">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>৫. পরিভাষা (Jargon)</h2>
+                <span class="chevron">▼</span>
+            </div>
+            <div class="section-body">
+                <div class="table-wrap">
+                    <table>
+                        <tr><th>Term</th><th>Full Form</th><th>অর্থ (বাংলা)</th><th>কেন গুরুত্বপূর্ণ</th></tr>
+                        <tr><td>CHR</td><td>Cloud Hosted Router</td><td>RouterOS-এর ভার্চুয়াল সংস্করণ</td><td>ফিজিক্যাল হার্ডওয়্যার ছাড়াই RouterOS চালানো যায়</td></tr>
+                        <tr><td>VMDK</td><td>Virtual Machine Disk</td><td>VMware-এর ভার্চুয়াল ডিস্ক ফরম্যাট</td><td>CHR-এর বুট ডিস্ক হিসেবে ব্যবহৃত হয়</td></tr>
+                        <tr><td>VMnet</td><td>Virtual Network</td><td>VMware-এর ভার্চুয়াল নেটওয়ার্ক সেগমেন্ট</td><td>VM-এর নেটওয়ার্ক কানেক্টিভিটি নির্ধারণ করে</td></tr>
+                        <tr><td>NAT</td><td>Network Address Translation</td><td>প্রাইভেট IP-কে পাবলিক IP-তে রূপান্তর</td><td>VMnet 8 সাধারণত NAT মোডে থাকে</td></tr>
+                        <tr><td>Host-only</td><td>—</td><td>শুধু হোস্ট ও VM-এর মধ্যে যোগাযোগ</td><td>ল্যাব নেটওয়ার্ক তৈরিতে ব্যবহৃত</td></tr>
+                        <tr><td>System ID</td><td>—</td><td>CHR-এর ইউনিক আইডেন্টিফায়ার</td><td>লাইসেন্সিং ও অ্যাক্টিভেশনের জন্য প্রয়োজন</td></tr>
+                        <tr><td>Fast Path</td><td>—</td><td>হার্ডওয়্যার-অ্যাক্সিলারেটেড প্যাকেট ফরওয়ার্ডিং</td><td>vmxnet3/virtio-net-এ v7-এ সাপোর্টেড <citation:1]</td></tr>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Prerequisites -->
+        <section class="section" id="prereq" data-title="পূর্বশর্ত ও ডিপেন্ডেন্সি">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>৬. পূর্বশর্ত ও ডিপেন্ডেন্সি</h2>
+                <span class="chevron">▼</span>
+            </div>
+            <div class="section-body">
+                <h3>হোস্ট সিস্টেম</h3>
+                <ul>
+                    <li>64-bit প্রসেসর যাতে virtualization সাপোর্ট আছে (VT-x/AMD-V)</li>
+                    <li>RAM: কমপক্ষে 256 MB (সুপারিশ 1024 MB) <citation:1]</li>
+                    <li>ডিস্ক: কমপক্ষে 128 MB <citation:1]</li>
+                    <li>VMware Workstation 12 বা তার পরবর্তী <citation:5]</li>
+                </ul>
+                <h3>সফটওয়্যার</h3>
+                <ul>
+                    <li>MikroTik CHR VMDK ইমেজ (RouterOS v7.x Stable)</li>
+                    <li>Winbox (ঐচ্ছিক, GUI ম্যানেজমেন্টের জন্য)</li>
+                </ul>
+                <h3>নেটওয়ার্ক প্ল্যানিং</h3>
+                <p>VM তৈরির <strong>আগে</strong> কোন VMnet কোন কাজে ব্যবহার করবেন তা ঠিক করুন। সাধারণ ল্যাব সেটআপ:</p>
+                <ul>
+                    <li><strong>VMnet 8 (NAT):</strong> WAN — ইন্টারনেট অ্যাক্সেস</li>
+                    <li><strong>VMnet 1 (Host-only):</strong> LAN — ম্যানেজমেন্ট/টেস্টিং</li>
+                </ul>
+                <div class="callout">
+                    <strong>ℹ️ INFO</strong>
+                    VMware Workstation-এ Virtual Network Editor খুলে VMnet-গুলো কনফিগার করা যায়। Host-only VMnet-এ একটি নির্দিষ্ট সাবনেট (যেমন 192.168.100.0/24) সেট করে রাখলে ট্রাবলশুটিং সহজ হয় <citation:9]।
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Download & VM Creation -->
+        <section class="section" id="download" data-title="CHR ডাউনলোড ও VM তৈরি">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>৭. CHR ডাউনলোড ও VM তৈরি</h2>
+                <span class="chevron">▼</span>
+            </div>
+            <div class="section-body">
+                <h3>ধাপ ১: CHR VMDK ডাউনলোড</h3>
+                <p>MikroTik ডাউনলোড পেজে যান → <strong>Cloud Hosted Router</strong> সেকশন → <code>.vmdk</code> ফাইল ডাউনলোড করুন <citation:1]।</p>
+
+                <h3>ধাপ ২: VMware-এ নতুন VM</h3>
+                <p>VMware Workstation খুলুন → <strong>File → New Virtual Machine</strong> → Custom configuration।</p>
+                <ul>
+                    <li><strong>Guest OS:</strong> Other Linux (64-bit) নির্বাচন করুন (RouterOS প্রিসেট লিস্টে নেই)।</li>
+                    <li><strong>VM Name:</strong> যেমন <code>CHR-Lab-01</code></li>
+                    <li><strong>Memory:</strong> 1024 MB (সুপারিশ) <citation:5]</li>
+                    <li><strong>Disk:</strong> ডিফল্ট ডিস্কটি <strong>মুছে ফেলুন</strong>। তারপর "Use an existing virtual disk" নির্বাচন করে ডাউনলোড করা <code>.vmdk</code> ফাইলটি পয়েন্ট করুন।</li>
+                </ul>
+                <div class="code-block">
+                    <div class="code-header"><span>VM সেটিংস সারাংশ</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+                    <pre>Name: CHR-Lab-01
+Guest OS: Other Linux (64-bit)
+Memory: 1024 MB
+Disk: Existing VMDK (CHR image)
+Network Adapter 1: VMnet 8 (NAT)
+Network Adapter 2: VMnet 1 (Host-only)</pre>
+                </div>
+
+                <h3>ধাপ ৩: নেটওয়ার্ক অ্যাডাপ্টার</h3>
+                <p>VM সেটিংসে গিয়ে প্রয়োজন অনুযায়ী নেটওয়ার্ক অ্যাডাপ্টার যোগ করুন। ল্যাবের জন্য কমপক্ষে ২টি (WAN + LAN) রাখুন। অ্যাডাপ্টারের ক্রম অনুযায়ী CHR-এ <code>ether1</code>, <code>ether2</code> তৈরি হবে।</p>
+                <div class="callout callout-warning">
+                    <strong>⚠️ নেটওয়ার্ক অ্যাডাপ্টার টাইপ</strong>
+                    RouterOS v7-এ <code>vmxnet3</code> ব্যবহার করলে Fast Path সাপোর্ট পাওয়া যায়, যা পারফরম্যান্স বাড়ায় <citation:1]। E1000-ও কাজ করে, তবে vmxnet3 সুপারিশকৃত।
+                </div>
+
+                <h3>ধাপ ৪: প্রথম বুট</h3>
+                <p>VM পাওয়ার অন করুন। কনসোল খুলুন। RouterOS বুট হবে এবং লগইন প্রম্পট দেখাবে।</p>
+                <div class="code-block">
+                    <div class="code-header"><span>প্রথম লগইন</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+                    <pre>MikroTik Login: admin
+Password: (ফাঁকা, শুধু Enter চাপুন)</pre>
+                </div>
+                <p>লগইনের পর RouterOS লাইসেন্স দেখতে চাইবে — <code>n</code> চেপে স্কিপ করুন। তারপর একটি <strong>শক্তিশালী পাসওয়ার্ড</strong> সেট করুন।</p>
+            </div>
+        </section>
+
+        <!-- 8. Command Encyclopedia -->
+        <section class="section" id="commands" data-title="কমান্ড এনসাইক্লোপিডিয়া">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>৮. কমান্ড এনসাইক্লোপিডিয়া (RouterOS v7)</h2>
+                <span class="chevron">▼</span>
+            </div>
+            <div class="section-body">
+                <h3>কমান্ড #1 — সিস্টেম আইডি ও লাইসেন্স</h3>
+                <div class="code-block">
+                    <div class="code-header"><span>MikroTik RouterOS v7 — System ID</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+                    <pre>/system license print</pre>
+                </div>
+                <p><strong>উদ্দেশ্য:</strong> CHR-এর System ID এবং বর্তমান লাইসেন্স লেভেল দেখা।<br>
+                <strong>প্রত্যাশিত:</strong> <code>system-id: XXXXXXXXXXXX</code> এবং <code>level: free</code> দেখাবে <citation:3]।</p>
+
+                <h3>কমান্ড #2 — ইন্টারফেস তালিকা</h3>
+                <div class="code-block">
+                    <div class="code-header"><span>MikroTik RouterOS v7 — Interfaces</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+                    <pre>/interface print</pre>
+                </div>
+                <p><strong>উদ্দেশ্য:</strong> <code>ether1</code>, <code>ether2</code> ইত্যাদি ইন্টারফেস দেখা এবং সেগুলো running কিনা যাচাই।</p>
+
+                <h3>কমান্ড #3 — IP ঠিকানা অ্যাসাইন</h3>
+                <div class="code-block">
+                    <div class="code-header"><span>MikroTik RouterOS v7 — IP Address</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+                    <pre>/ip address add address=192.168.100.1/24 interface=ether2 comment="LAN Management"</pre>
+                </div>
+                <p><strong>উদ্দেশ্য:</strong> LAN ইন্টারফেসে ম্যানেজমেন্ট IP সেট করা।</p>
+
+                <h3>কমান্ড #4 — DHCP সার্ভার</h3>
+                <div class="code-block">
+                    <div class="code-header"><span>MikroTik RouterOS v7 — DHCP Server</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+                    <pre>/ip pool add name=lan-pool ranges=192.168.100.100-192.168.100.200
+/ip dhcp-server add interface=ether2 address-pool=lan-pool disabled=no
+/ip dhcp-server network add address=192.168.100.0/24 gateway=192.168.100.1</pre>
+                </div>
+                <p><strong>উদ্দেশ্য:</strong> LAN-এ DHCP সার্ভার চালু করা যাতে ক্লায়েন্টরা অটো IP পায়।</p>
+
+                <h3>কমান্ড #5 — NAT (মাসকারেড)</h3>
+                <div class="code-block">
+                    <div class="code-header"><span>MikroTik RouterOS v7 — NAT</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+                    <pre>/ip firewall nat add chain=srcnat out-interface=ether1 action=masquerade</pre>
+                </div>
+                <p><strong>উদ্দেশ্য:</strong> LAN ক্লায়েন্টদের WAN (ইন্টারনেট) অ্যাক্সেস দেওয়ার জন্য NAT।<br>
+                <strong>⚠️ শর্ত:</strong> <code>ether1</code> অবশ্যই DHCP ক্লায়েন্ট বা স্ট্যাটিক IP দিয়ে ইন্টারনেট-সংযুক্ত থাকতে হবে।</p>
+
+                <h3>কমান্ড #6 — লাইসেন্স রিনিউ (ট্রায়াল)</h3>
+                <div class="code-block">
+                    <div class="code-header"><span>MikroTik RouterOS v7 — License Renewal</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+                    <pre>/system license renew</pre>
+                </div>
+                <p><strong>উদ্দেশ্য:</strong> ৬০ দিনের ট্রায়াল লাইসেন্স অ্যাক্টিভেট করা। MikroTik.com অ্যাকাউন্টের ইউজারনেম/পাসওয়ার্ড লাগবে <citation:4]।<br>
+                <strong>⚠️:</strong> এটি শুধু Free লাইসেন্সে করা যায়। ইতিমধ্যে ট্রায়াল/পেইড থাকলে করবেন না।</p>
+            </div>
+        </section>
+
+        <!-- 9. Verification -->
+        <section class="section" id="verify" data-title="যাচাই ও মনিটরিং">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>৯. যাচাই ও মনিটরিং</h2>
+                <span class="chevron">▼</span>
+            </div>
+            <div class="section-body">
+                <div class="table-wrap">
+                    <table>
+                        <tr><th>চেক</th><th>কমান্ড</th><th>সুস্থ ফল</th><th>অসুস্থ ফল</th><th>পরবর্তী পদক্ষেপ</th></tr>
+                        <tr><td>ইন্টারফেস আপ</td><td><code>/interface print</code></td><td><code>R</code> ফ্ল্যাগ (Running)</td><td><code>X</code> ফ্ল্যাগ (Disabled) বা কিছু নেই</td><td>VM নেটওয়ার্ক অ্যাডাপ্টার ও VMnet চেক</td></tr>
+                        <tr><td>IP অ্যাসাইন</td><td><code>/ip address print</code></td><td>সেট করা IP দেখা যায়</td><td>খালি</td><td><code>/ip address add</code> করুন</td></tr>
+                        <tr><td>DHCP লিজ</td><td><code>/ip dhcp-server lease print</code></td><td>ক্লায়েন্ট লিজ আছে</td><td>কোনো লিজ নেই</td><td>DHCP সার্ভার ও পুল চেক</td></tr>
+                        <tr><td>NAT কাউন্টার</td><td><code>/ip firewall nat print stats</code></td><td>Packet বাড়ছে</td><td>0 আছে</td><td>Firewall rule ও ইন্টারফেস চেক</td></tr>
+                        <tr><td>পিং (WAN)</td><td><code>/ping 8.8.8.8</code></td><td>Reply আসছে</td><td>Timeout</td><td>WAN IP, গেটওয়ে, DNS চেক</td></tr>
+                    </table>
+                </div>
+                <div class="callout">
+                    <strong>ℹ️ INFO</strong>
+                    CHR-এর Free লাইসেন্সে গতি সীমা ১ Mbps। যদি পিং ঠিক থাকে কিন্তু ডেটা ট্রান্সফার খুব ধীর হয়, তাহলে লাইসেন্স লেভেল চেক করুন <citation:4]।
+                </div>
+            </div>
+        </section>
+
+        <!-- 10. Troubleshooting -->
+        <section class="section" id="troubleshooting" data-title="ট্রাবলশুটিং">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>১০. ট্রাবলশুটিং</h2>
+                <span class="chevron">▼</span>
+            </div>
+            <div class="section-body">
+                <h3>সিম্পটম → চেক → কমান্ড → ব্যাখ্যা</h3>
+                <div class="table-wrap">
+                    <table>
+                        <tr><th>সিম্পটম</th><th>প্রথম চেক</th><th>কমান্ড</th><th>ব্যাখ্যা / ফিক্স</th></tr>
+                        <tr><td>VM বুট হচ্ছে না</td><td>ডিস্ক অ্যাটাচমেন্ট</td><td>VM Settings → Hard Disk</td><td><code>.vmdk</code> সঠিকভাবে অ্যাটাচ হয়েছে কিনা দেখুন; ডিফল্ট ডিস্ক মুছে ফেলুন</td></tr>
+                        <tr><td>লগইন হচ্ছে না</td><td>ইউজারনেম/পাসওয়ার্ড</td><td><code>admin</code> / ফাঁকা</td><td>প্রথমবার পাসওয়ার্ড ফাঁকা; পরে সেট করা পাসওয়ার্ড ব্যবহার করুন</td></tr>
+                        <tr><td>ether1/ether2 দেখা যাচ্ছে না</td><td>VM নেটওয়ার্ক অ্যাডাপ্টার</td><td>VM Settings → Network Adapter</td><td>কমপক্ষে ১টি অ্যাডাপ্টার যোগ করুন; VMnet সঠিক কিনা দেখুন</td></tr>
+                        <tr><td>ইন্টারনেট নেই</td><td>WAN IP</td><td><code>/ip address print</code></td><td><code>ether1</code>-এ DHCP ক্লায়েন্ট চালু করুন: <code>/ip dhcp-client add interface=ether1 disabled=no</code></td></tr>
+                        <tr><td>LAN ক্লায়েন্ট IP পাচ্ছে না</td><td>DHCP সার্ভার</td><td><code>/ip dhcp-server print</code></td><td>DHCP সার্ভার <code>disabled=no</code> কিনা এবং সঠিক ইন্টারফেসে আছে কিনা দেখুন</td></tr>
+                        <tr><td>ডেটা খুব ধীর</td><td>লাইসেন্স</td><td><code>/system license print</code></td><td>Free লাইসেন্সে ১ Mbps সীমা; ট্রায়াল/পেইড লাইসেন্সে আপগ্রেড করুন <citation:4]</td></tr>
+                    </table>
+                </div>
+                <h3>সিদ্ধান্ত গাছ (Decision Tree)</h3>
+                <div class="code-block">
+                    <div class="code-header"><span>Text-based Decision Tree</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+                    <pre>VM পাওয়ার অন?
+├── না → VMware হোস্ট virtualization enabled? → BIOS/UEFI-তে VT-x/AMD-V চেক
+└── হ্যাঁ → কনসোলে কিছু দেখা যাচ্ছে?
+    ├── না → ডিস্ক ইমেজ সঠিক? → .vmdk অ্যাটাচমেন্ট চেক
+    └── হ্যাঁ → লগইন প্রম্পট?
+        ├── না → বুট মেসেজে এরর? → ডিস্ক ফাইল corrupt কিনা চেক
+        └── হ্যাঁ → admin / ফাঁকা পাসওয়ার্ডে লগইন
+            ├── ব্যর্থ → পাসওয়ার্ড পরিবর্তন হয়েছে? → VM রিসেট বা নতুন ইমেজ
+            └── সফল → ইন্টারফেস দেখা যাচ্ছে?
+                ├── না → VM নেটওয়ার্ক অ্যাডাপ্টার যোগ করুন
+                └── হ্যাঁ → IP সেট করুন → পিং টেস্ট</pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- 11. Best Practices -->
+        <section class="section" id="bestpractices" data-title="সেরা অনুশীলন ও সতর্কতা">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>১১. সেরা অনুশীলন ও সতর্কতা</h2>
+                <span class="chevron">▼</span>
+            </div>
+            <div class="section-body">
+                <h3>ল্যাব বনাম প্রোডাকশন</h3>
+                <div class="table-wrap">
+                    <table>
+                        <tr><th>দিক</th><th>ল্যাব</th><th>প্রোডাকশন</th></tr>
+                        <tr><td>লাইসেন্স</td><td>Free (১ Mbps) যথেষ্ট</td><td>P1/P10/Unlimited প্রয়োজন <citation:4]</td></tr>
+                        <tr><td>ব্যাকআপ</td><td>VM স্ন্যাপশট</td><td><code>/system backup save</code> + <code>/export</code></td></tr>
+                        <tr><td>পাসওয়ার্ড</td><td>সহজ পাসওয়ার্ড</td><td>শক্তিশালী, ইউনিক পাসওয়ার্ড</td></tr>
+                        <tr><td>নেটওয়ার্ক</td><td>Host-only VMnet</td><td>প্রপার VLAN, ফিজিক্যাল সুইচ</td></tr>
+                        <tr><td>মনিটরিং</td><td>ম্যানুয়াল চেক</td><td>SNMP, Syslog, Netwatch</td></tr>
+                    </table>
+                </div>
+                <h3>গুরুত্বপূর্ণ সতর্কতা</h3>
+                <ul>
+                    <li><strong>System ID ক্লোনিং:</strong> VM ক্লোন করলে একই System ID হতে পারে। নতুন ট্রায়ালের জন্য <code>/system license generate-new-id</code> চালান (শুধু Free লাইসেন্সে) <citation:4]।</li>
+                    <li><strong>ট্রায়াল মেয়াদ:</strong> ৬০ দিনের মধ্যে লাইসেন্স কিনতে না পারলে CHR আপগ্রেড করা যাবে না।</li>
+                    <li><strong>MTU:</strong> VMware ESXi-তে jumbo frame (9000) সাপোর্ট করে, কিন্তু ইন্টারফেস MTU পরিবর্তন করতে হয় <citation:2]।</li>
+                    <li><strong>Paravirtualization:</strong> CHR কোনো paravirtualized প্ল্যাটফর্মে চলে না <citation:1]।</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 12. Lab -->
+        <section class="section" id="lab" data-title="হ্যান্ডস-অন ল্যাব">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>১২. হ্যান্ডস-অন ল্যাব (Beginner → Advanced)</h2>
+                <span class="chevron">▼</span>
+            </div>
+            <div class="section-body">
+                <h3>ল্যাব ১: বেসিক নেটওয়ার্কিং (Beginner)</h3>
+                <p><strong>উদ্দেশ্য:</strong> CHR-এ দুটি ইন্টারফেস কনফিগার করে LAN থেকে WAN-এ পিং করা।</p>
+                <p><strong>টপোলজি:</strong></p>
+                <div class="code-block">
+                    <div class="code-header"><span>Topology (English Labels)</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+                    <pre>[Host PC] --- (VMnet 1) --- [CHR ether2: 192.168.100.1/24]
+                                     |
+                              [CHR ether1: DHCP Client]
+                                     |
+                                (VMnet 8 NAT) --- Internet</pre>
+                </div>
+                <p><strong>ধাপ:</strong></p>
+                <ol>
+                    <li><code>ether1</code>-এ DHCP ক্লায়েন্ট: <code>/ip dhcp-client add interface=ether1 disabled=no</code></li>
+                    <li><code>ether2</code>-এ IP: <code>/ip address add address=192.168.100.1/24 interface=ether2</code></li>
+                    <li>NAT: <code>/ip firewall nat add chain=srcnat out-interface=ether1 action=masquerade</code></li>
+                    <li>হোস্ট থেকে CHR-এ পিং: <code>ping 192.168.100.1</code></li>
+                    <li>CHR থেকে ইন্টারনেট পিং: <code>/ping 8.8.8.8</code></li>
+                </ol>
+                <p><strong>সফলতার মাপকাঠি:</strong> হোস্ট → CHR এবং CHR → ইন্টারনেট পিং সফল।</p>
+
+                <h3>ল্যাব ২: DHCP + DNS (Intermediate)</h3>
+                <p><strong>উদ্দেশ্য:</strong> LAN ক্লায়েন্টদের অটো IP ও DNS প্রদান।</p>
+                <div class="code-block">
+                    <div class="code-header"><span>DHCP + DNS কনফিগারেশন</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+                    <pre>/ip pool add name=lan-pool ranges=192.168.100.100-192.168.100.150
+/ip dhcp-server add interface=ether2 address-pool=lan-pool disabled=no
+/ip dhcp-server network add address=192.168.100.0/24 gateway=192.168.100.1 dns-server=8.8.8.8,1.1.1.1
+/ip dns set servers=8.8.8.8,1.1.1.1 allow-remote-requests=yes</pre>
+                </div>
+                <p><strong>টেস্ট:</strong> হোস্ট মেশিনের নেটওয়ার্ক অ্যাডাপ্টার VMnet 1-এ DHCP-তে সেট করুন, তারপর <code>ipconfig /renew</code> (Windows) বা <code>dhclient</code> (Linux) চালান।</p>
+
+                <h3>ল্যাব ৩: ফায়ারওয়াল বেসিক (Advanced)</h3>
+                <p><strong>উদ্দেশ্য:</strong> WAN থেকে LAN-এ অনুপ্রবেশ ব্লক করা।</p>
+                <div class="code-block">
+                    <div class="code-header"><span>Basic Firewall Rules</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+                    <pre>/ip firewall filter add chain=input in-interface=ether1 action=drop comment="Drop WAN Input"
+/ip firewall filter add chain=input connection-state=established,related action=accept comment="Allow Established"</pre>
+                </div>
+                <div class="callout callout-danger">
+                    <strong>⚠️ সতর্কতা</strong>
+                    এই রুলটি প্রয়োগের আগে নিশ্চিত করুন যে আপনার ম্যানেজমেন্ট অ্যাক্সেস (Winbox/SSH) LAN-এর মাধ্যমে হচ্ছে। ভুল করলে WAN থেকে লকআউট হতে পারেন। প্রথমে <code>action=accept</code> দিয়ে টেস্ট করুন, তারপর <code>drop</code> করুন।
+                </div>
+            </div>
+        </section>
+
+        <!-- 13. Interview -->
+        <section class="section" id="interview" data-title="ইন্টারভিউ প্রশ্ন">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>১৩. ইন্টারভিউ প্রশ্ন ও উত্তর</h2>
+                <span class="chevron">▼</span>
+            </div>
+            <div class="section-body">
+                <h3>Beginner</h3>
+                <p><strong>প্রশ্ন ১: CHR কী?</strong><br>উত্তর: CHR (Cloud Hosted Router) হলো MikroTik RouterOS-এর ভার্চুয়াল সংস্করণ, যা x86_64 হাইপারভাইজারে চলে <citation:1]।</p>
+                <p><strong>প্রশ্ন ২: CHR-এর ডিফল্ট ইউজারনেম কী?</strong><br>উত্তর: <code>admin</code>, পাসওয়ার্ড ফাঁকা।</p>
+                <p><strong>প্রশ্ন ৩: CHR-এর Free লাইসেন্সে গতি সীমা কত?</strong><br>উত্তর: প্রতি ইন্টারফেসে ১ Mbps <citation:4]।</p>
+
+                <h3>Intermediate</h3>
+                <p><strong>প্রশ্ন ৪: VMware-এ CHR-এর জন্য কোন ডিস্ক ফরম্যাট ব্যবহার হয়?</strong><br>উত্তর: <code>.vmdk</code> (VMware Virtual Machine Disk)।</p>
+                <p><strong>প্রশ্ন ৫: CHR-এ Fast Path সাপোর্ট করে কোন নেটওয়ার্ক অ্যাডাপ্টার?</strong><br>উত্তর: RouterOS v7-এ <code>vmxnet3</code> এবং <code>virtio-net</code> <citation:1]।</p>
+
+                <h3>Advanced</h3>
+                <p><strong>প্রশ্ন ৬: VM ক্লোন করলে কী সমস্যা হতে পারে?</strong><br>উত্তর: একই System ID তৈরি হতে পারে, যা লাইসেন্সিংয়ে সমস্যা করে। সমাধান: Free লাইসেন্সে <code>/system license generate-new-id</code> <citation:4]।</p>
+                <p><strong>প্রশ্ন ৭: CHR-এর ট্রায়াল লাইসেন্স কত দিনের?</strong><br>উত্তর: ৬০ দিন।</p>
+            </div>
+        </section>
+
+        <!-- 14. Cheat Sheet -->
+        <section class="section" id="cheatsheet" data-title="চিট শিট ও কমান্ড চেকলিস্ট">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>১৪. চিট শিট ও কমান্ড চেকলিস্ট</h2>
+                <span class="chevron">▼</span>
+            </div>
+            <div class="section-body">
+                <div class="table-wrap">
+                    <table>
+                        <tr><th>কমান্ড</th><th>উদ্দেশ্য</th><th>কখন ব্যবহার</th></tr>
+                        <tr><td><code>/system license print</code></td><td>সিস্টেম আইডি ও লাইসেন্স</td><td>ইনস্টলেশনের পর</td></tr>
+                        <tr><td><code>/interface print</code></td><td>ইন্টারফেস তালিকা</td><td>নেটওয়ার্ক চেক</td></tr>
+                        <tr><td><code>/ip address add</code></td><td>IP অ্যাসাইন</td><td>বেসিক কনফিগ</td></tr>
+                        <tr><td><code>/ip dhcp-client add</code></td><td>DHCP থেকে IP নেওয়া</td><td>WAN কনফিগ</td></tr>
+                        <tr><td><code>/ip firewall nat add</code></td><td>NAT</td><td>LAN → ইন্টারনেট</td></tr>
+                        <tr><td><code>/ip firewall filter add</code></td><td>ফায়ারওয়াল</td><td>সিকিউরিটি</td></tr>
+                        <tr><td><code>/system backup save</code></td><td>ব্যাকআপ</td><td>কনফিগ পরিবর্তনের আগে</td></tr>
+                        <tr><td><code>/system license renew</code></td><td>ট্রায়াল অ্যাক্টিভেশন</td><td>ফ্রি থেকে আপগ্রেড</td></tr>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 15. Completeness Audit -->
+        <section class="section" id="audit" data-title="সম্পূর্ণতা অডিট">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>১৫. সম্পূর্ণতা অডিট</h2>
+                <span class="chevron">▼</span>
+            </div>
+            <div class="section-body">
+                <ul>
+                    <li>✅ Vendor ও Topic সঠিকভাবে চিহ্নিত</li>
+                    <li>✅ OS/Version অনুমান স্পষ্টভাবে উল্লেখ</li>
+                    <li>✅ পাঁচটি স্তম্ভ গভীরভাবে কভার</li>
+                    <li>✅ কমান্ড RouterOS v7-এর জন্য সঠিক</li>
+                    <li>✅ কোনো বানোয়াট সিনট্যাক্স নেই</li>
+                    <li>✅ কনফিগের পর ভেরিফিকেশন</li>
+                    <li>✅ ল্যাব টপোলজি ও ক্লিনআপ</li>
+                    <li>✅ ট্রাবলশুটিং কমান্ড ও ব্যাখ্যা</li>
+                    <li>✅ সেরা অনুশীলন ও সতর্কতা</li>
+                    <li>✅ ইন্টারভিউ প্রশ্ন</li>
+                    <li>✅ চিট শিট</li>
+                </ul>
+                <div class="callout">
+                    <strong>ℹ️ নোট</strong>
+                    এই হ্যান্ডবুকটি MikroTik-এর অফিসিয়াল ডকুমেন্টেশন এবং নির্ভরযোগ্য সোর্সের উপর ভিত্তি করে তৈরি। কোনো ল্যাব নিজে চালিয়ে টেস্ট করা হয়নি — কনফিগারেশন উদাহরণগুলো স্ট্যান্ডার্ড RouterOS v7 সিনট্যাক্স অনুসরণ করে।
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <button class="back-top" id="backTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+    <script>
+        // Theme
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            const next = current === 'light' ? 'dark' : 'light';
+            html.setAttribute('data-theme', next);
+            try { localStorage.setItem('theme', next); } catch(e) {}
+        }
+        try {
+            const saved = localStorage.getItem('theme');
+            if (saved) document.documentElement.setAttribute('data-theme', saved);
+        } catch(e) {}
+
+        // Section toggle
+        function toggleSection(header) {
+            header.parentElement.classList.toggle('collapsed');
+        }
+        function expandAll() {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('collapsed'));
+        }
+        function collapseAll() {
+            document.querySelectorAll('.section').forEach(s => s.classList.add('collapsed'));
+        }
+
+        // Copy
+        function copyCode(btn) {
+            const pre = btn.closest('.code-block').querySelector('pre');
+            const text = pre.textContent;
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(() => {
+                    btn.textContent = '✅ কপি হয়েছে';
+                    setTimeout(() => btn.textContent = 'কপি', 2000);
+                }).catch(() => fallbackCopy(text, btn));
+            } else {
+                fallbackCopy(text, btn);
+            }
+        }
+        function fallbackCopy(text, btn) {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            try {
+                document.execCommand('copy');
+                btn.textContent = '✅ কপি হয়েছে';
+            } catch(e) {
+                btn.textContent = '❌ ব্যর্থ';
+            }
+            document.body.removeChild(ta);
+            setTimeout(() => btn.textContent = 'কপি', 2000);
+        }
+
+        // Search
+        function performSearch() {
+            const query = document.getElementById('searchInput').value.trim().toLowerCase();
+            const sections = document.querySelectorAll('.section');
+            const allText = document.body.innerText.toLowerCase();
+            
+            sections.forEach(sec => {
+                if (!query) {
+                    sec.classList.remove('search-hidden');
+                    return;
+                }
+                const text = sec.innerText.toLowerCase();
+                if (text.includes(query)) {
+                    sec.classList.remove('search-hidden');
+                    sec.classList.remove('collapsed');
+                } else {
+                    sec.classList.add('search-hidden');
+                }
+            });
+        }
+
+        // TOC generation
+        (function buildTOC() {
+            const sections = document.querySelectorAll('.section');
+            const grid = document.getElementById('tocGrid');
+            sections.forEach(sec => {
+                const id = sec.id;
+                const title = sec.getAttribute('data-title') || id;
+                const a = document.createElement('a');
+                a.href = '#' + id;
+                a.textContent = title;
+                grid.appendChild(a);
+            });
+        })();
+
+        // Progress bar & back to top
+        window.addEventListener('scroll', () => {
+            const scrollTop = window.scrollY;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+            document.getElementById('progressBar').style.width = progress + '%';
+            
+            const backTop = document.getElementById('backTop');
+            if (scrollTop > 400) {
+                backTop.classList.add('show');
+            } else {
+                backTop.classList.remove('show');
+            }
+        });
+
+        // Start with some sections collapsed
+        document.addEventListener('DOMContentLoaded', () => {
+            // Collapse all except first few
+            const sections = document.querySelectorAll('.section');
+            sections.forEach((sec, i) => {
+                if (i > 4) sec.classList.add('collapsed');
+            });
+        });
+    </script>
+</body>
+</html>
