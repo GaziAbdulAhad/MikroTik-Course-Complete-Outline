@@ -1,0 +1,1870 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MikroTik CHR EVE-NG ইনস্টলেশন — নেটওয়ার্ক ইঞ্জিনিয়ারিং হ্যান্ডবুক</title>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --surface: #111c2e;
+      --surface-2: #1a2a40;
+      --text: #e8edf5;
+      --text-secondary: #94a3b8;
+      --accent: #2dd4bf;
+      --accent-dim: #134e4a;
+      --border: #2a3a50;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --success: #22c55e;
+      --info: #3b82f6;
+      --radius: 10px;
+      --shadow: 0 4px 24px rgba(0,0,0,0.35);
+      --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans Bengali', 'Hind Siliguri', sans-serif;
+      --font-mono: 'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+      --max-width: 1120px;
+    }
+
+    [data-theme="light"] {
+      --bg: #f1f5f9;
+      --surface: #ffffff;
+      --surface-2: #f8fafc;
+      --text: #0f172a;
+      --text-secondary: #475569;
+      --accent: #0d9488;
+      --accent-dim: #ccfbf1;
+      --border: #cbd5e1;
+      --shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.75;
+      font-size: 16px;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      * { transition-duration: 0.01ms !important; }
+    }
+
+    /* HEADER */
+    .top-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+    .header-inner {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .header-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .header-meta {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+    }
+    .header-meta strong { color: var(--text); }
+    .header-controls { display: flex; gap: 8px; align-items: center; }
+    .theme-toggle, .expand-all, .collapse-all {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-family: var(--font-sans);
+      white-space: nowrap;
+      transition: background 0.2s;
+    }
+    .theme-toggle:hover, .expand-all:hover, .collapse-all:hover { background: var(--border); }
+    .theme-toggle:focus-visible, .expand-all:focus-visible, .collapse-all:focus-visible,
+    .copy-btn:focus-visible, .filter-btn:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* TOOLBAR */
+    .toolbar {
+      max-width: var(--max-width);
+      margin: 18px auto 0;
+      padding: 0 24px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .search-box { flex: 1; min-width: 240px; position: relative; }
+    .search-box input {
+      width: 100%;
+      padding: 11px 16px 11px 42px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 0.92rem;
+      font-family: var(--font-sans);
+    }
+    .search-box input::placeholder { color: var(--text-secondary); }
+    .search-box input:focus { outline: none; border-color: var(--accent); }
+    .search-icon {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      color: var(--text-secondary); font-size: 1rem; pointer-events: none;
+    }
+    .filter-group { display: flex; gap: 5px; flex-wrap: wrap; }
+    .filter-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 7px 13px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-family: var(--font-sans);
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .filter-btn.active {
+      background: var(--accent);
+      color: #0b1120;
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+    .filter-btn:hover:not(.active) { border-color: var(--accent); color: var(--text); }
+
+    /* PROGRESS */
+    .progress-bar-container {
+      max-width: var(--max-width);
+      margin: 14px auto 0;
+      padding: 0 24px;
+    }
+    .progress-track {
+      height: 5px;
+      background: var(--surface-2);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      width: 0%;
+      border-radius: 3px;
+      transition: width 0.5s ease;
+    }
+    .progress-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 5px;
+    }
+
+    /* TOC */
+    .toc-container {
+      max-width: var(--max-width);
+      margin: 20px auto 0;
+      padding: 0 24px;
+    }
+    .toc-toggle {
+      display: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 16px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+      width: 100%;
+      text-align: left;
+    }
+    .toc-nav {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+    }
+    .toc-nav h3 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+    }
+    .toc-list { list-style: none; columns: 2; column-gap: 24px; }
+    .toc-list li { margin-bottom: 5px; break-inside: avoid; }
+    .toc-list a {
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.84rem;
+      display: block;
+      padding: 3px 0 3px 8px;
+      border-left: 2px solid transparent;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .toc-list a:hover, .toc-list a.active { border-left-color: var(--accent); color: var(--accent); }
+
+    /* MAIN */
+    .main-content {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 24px 80px;
+    }
+    .section {
+      margin-top: 28px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      overflow: hidden;
+      transition: box-shadow 0.2s;
+    }
+    .section:hover { box-shadow: var(--shadow); }
+    .section-header {
+      padding: 15px 20px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.2s;
+    }
+    .section.open .section-header { border-bottom-color: var(--border); }
+    .section-header h2 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .section-number {
+      background: var(--accent-dim);
+      color: var(--accent);
+      width: 26px; height: 26px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.78rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .section-toggle-icon {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      transition: transform 0.25s;
+      flex-shrink: 0;
+      margin-left: 12px;
+    }
+    .section.open .section-toggle-icon { transform: rotate(180deg); }
+    .section-body { display: none; padding: 20px; }
+    .section.open .section-body { display: block; }
+
+    /* TYPOGRAPHY */
+    .section-body h3 {
+      font-size: 0.98rem;
+      margin: 20px 0 8px;
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .section-body h3:first-child { margin-top: 0; }
+    .section-body h4 {
+      font-size: 0.9rem;
+      margin: 14px 0 6px;
+      color: var(--text);
+      font-weight: 600;
+    }
+    .section-body p { margin-bottom: 12px; color: var(--text); }
+    .section-body ul, .section-body ol { margin: 6px 0 14px 20px; color: var(--text); }
+    .section-body li { margin-bottom: 5px; }
+    .section-body a { color: var(--accent); }
+
+    /* CODE */
+    .code-wrapper {
+      position: relative;
+      margin: 12px 0;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #060c17;
+      overflow: hidden;
+    }
+    .code-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 7px 14px;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+    }
+    .code-label {
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .copy-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 3px 11px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.7rem;
+      font-family: var(--font-sans);
+      transition: all 0.2s;
+    }
+    .copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+    .copy-btn.copied { color: var(--success); border-color: var(--success); }
+    .code-wrapper pre {
+      margin: 0;
+      padding: 13px 16px;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: #e2e8f0;
+      tab-size: 2;
+    }
+    .code-wrapper pre code { font-family: inherit; }
+    .code-wrapper.warning { border-color: var(--warning); }
+    .code-wrapper.warning .code-header { background: rgba(245,158,11,0.12); }
+    .code-wrapper.danger { border-color: var(--danger); }
+    .code-wrapper.danger .code-header { background: rgba(239,68,68,0.12); }
+
+    /* TABLE */
+    .table-wrap {
+      overflow-x: auto;
+      margin: 12px 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.84rem;
+      min-width: 500px;
+    }
+    thead { background: var(--surface-2); }
+    th {
+      padding: 9px 13px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    td {
+      padding: 9px 13px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      vertical-align: top;
+    }
+    tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: var(--surface-2); }
+
+    /* CALLOUT */
+    .callout {
+      padding: 13px 17px;
+      border-radius: 8px;
+      margin: 12px 0;
+      border-left: 4px solid;
+      font-size: 0.88rem;
+    }
+    .callout.info { background: rgba(59,130,246,0.08); border-left-color: var(--info); }
+    .callout.warning { background: rgba(245,158,11,0.08); border-left-color: var(--warning); }
+    .callout.danger { background: rgba(239,68,68,0.08); border-left-color: var(--danger); }
+    .callout.success { background: rgba(34,197,94,0.08); border-left-color: var(--success); }
+    .callout.noc { background: rgba(139,92,246,0.08); border-left-color: #8b5cf6; }
+    .callout.production { background: rgba(236,72,153,0.08); border-left-color: #ec4899; }
+    .callout-label {
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.7rem;
+      letter-spacing: 0.05em;
+      display: block;
+      margin-bottom: 3px;
+    }
+    .callout.info .callout-label { color: var(--info); }
+    .callout.warning .callout-label { color: var(--warning); }
+    .callout.danger .callout-label { color: var(--danger); }
+    .callout.success .callout-label { color: var(--success); }
+    .callout.noc .callout-label { color: #8b5cf6; }
+    .callout.production .callout-label { color: #ec4899; }
+
+    /* DIAGRAM */
+    .diagram {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 18px;
+      margin: 14px 0;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      line-height: 1.9;
+      overflow-x: auto;
+    }
+    .diagram .box {
+      display: inline-block;
+      padding: 5px 13px;
+      border: 2px solid var(--accent);
+      border-radius: 6px;
+      margin: 3px;
+      background: var(--surface);
+    }
+    .diagram .arrow { color: var(--text-secondary); margin: 0 5px; }
+    .diagram .label { color: var(--text-secondary); font-size: 0.72rem; }
+
+    /* BADGE */
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 0.68rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .badge.beginner { background: rgba(34,197,94,0.18); color: var(--success); }
+    .badge.intermediate { background: rgba(59,130,246,0.18); color: var(--info); }
+    .badge.advanced { background: rgba(245,158,11,0.18); color: var(--warning); }
+    .badge.expert { background: rgba(239,68,68,0.18); color: var(--danger); }
+
+    /* CHECKLIST */
+    .checklist { list-style: none; margin: 6px 0 14px; padding: 0; }
+    .checklist li {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      padding: 5px 0;
+      font-size: 0.88rem;
+    }
+    .checklist input[type="checkbox"] {
+      margin-top: 4px;
+      width: 15px; height: 15px;
+      accent-color: var(--accent);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .checklist label { cursor: pointer; }
+
+    /* BACK TO TOP */
+    .back-to-top {
+      position: fixed;
+      bottom: 22px; right: 22px;
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #0b1120;
+      border: none;
+      cursor: pointer;
+      font-size: 1.1rem;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow);
+      z-index: 99;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .back-to-top.visible { display: flex; }
+    .back-to-top:hover { transform: scale(1.1); }
+
+    /* NO RESULTS */
+    .no-results {
+      text-align: center;
+      padding: 36px 20px;
+      color: var(--text-secondary);
+      font-size: 0.92rem;
+    }
+    .no-results strong { color: var(--accent); }
+
+    .hidden { display: none !important; }
+    .text-small { font-size: 0.8rem; color: var(--text-secondary); }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+      .top-header { padding: 11px 16px; }
+      .header-inner { flex-direction: column; align-items: flex-start; }
+      .header-meta { font-size: 0.72rem; gap: 8px; }
+      .toolbar { padding: 0 16px; }
+      .toc-container { padding: 0 16px; }
+      .toc-toggle { display: block; }
+      .toc-nav { display: none; margin-top: 8px; }
+      .toc-nav.show { display: block; }
+      .toc-list { columns: 1; }
+      .main-content { padding: 0 16px 80px; }
+      .section-header { padding: 13px 15px; }
+      .section-body { padding: 15px; }
+      .section-header h2 { font-size: 0.92rem; }
+      .filter-group { width: 100%; }
+      .filter-btn { flex: 1; text-align: center; font-size: 0.7rem; padding: 6px 7px; }
+      .header-controls { width: 100%; }
+      .theme-toggle, .expand-all, .collapse-all { flex: 1; text-align: center; }
+    }
+
+    @media print {
+      .top-header, .toolbar, .progress-bar-container, .toc-container,
+      .back-to-top, .copy-btn, .section-toggle-icon, .theme-toggle,
+      .expand-all, .collapse-all, .filter-group, .search-box { display: none !important; }
+      .section { break-inside: avoid; border: 1px solid #ccc; }
+      .section-body { display: block !important; }
+      body { background: #fff; color: #000; }
+    }
+  </style>
+</head>
+<body data-theme="dark">
+
+<header class="top-header">
+  <div class="header-inner">
+    <div class="header-title">MikroTik CHR on EVE-NG</div>
+    <div class="header-meta">
+      <span><strong>Vendor:</strong> MikroTik RouterOS</span>
+      <span><strong>Topic:</strong> CHR on EVE-NG</span>
+      <span><strong>Version:</strong> v7.x</span>
+      <span><strong>Env:</strong> EVE-NG Community</span>
+      <span><strong>Depth:</strong> Beginner → Expert</span>
+    </div>
+    <div class="header-controls">
+      <button class="theme-toggle" id="themeToggle" aria-label="থিম পরিবর্তন করুন">🌙 Light Mode</button>
+      <button class="expand-all" id="expandAll">সব খুলুন</button>
+      <button class="collapse-all" id="collapseAll">সব বন্ধ করুন</button>
+    </div>
+  </div>
+</header>
+
+<div class="toolbar">
+  <div class="search-box">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="খুঁজুন... (কমান্ড, ধারণা, troubleshooting, ল্যাব)" autocomplete="off">
+  </div>
+  <div class="filter-group" id="filterGroup">
+    <button class="filter-btn active" data-filter="all">সব</button>
+    <button class="filter-btn" data-filter="concept">ধারণা</button>
+    <button class="filter-btn" data-filter="config">কনফিগারেশন</button>
+    <button class="filter-btn" data-filter="command">কমান্ড</button>
+    <button class="filter-btn" data-filter="verify">যাচাই</button>
+    <button class="filter-btn" data-filter="troubleshoot">Troubleshooting</button>
+    <button class="filter-btn" data-filter="security">Security</button>
+    <button class="filter-btn" data-filter="lab">Lab</button>
+    <button class="filter-btn" data-filter="production">Production</button>
+  </div>
+</div>
+
+<div class="progress-bar-container">
+  <div class="progress-track">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+  <div class="progress-label" id="progressLabel">অগ্রগতি: 0% (০টি সেকশন দেখা হয়েছে)</div>
+</div>
+
+<div class="toc-container">
+  <button class="toc-toggle" id="tocToggle" aria-expanded="false">📑 সূচিপত্র দেখুন</button>
+  <nav class="toc-nav" id="tocNav">
+    <h3>সূচিপত্র</h3>
+    <ul class="toc-list" id="tocList">
+      <li><a href="#s1">১. ওভারভিউ ও স্কোপ</a></li>
+      <li><a href="#s2">২. পাঁচটি প্রধান স্তম্ভ</a></li>
+      <li><a href="#s3">৩. নলেজ ট্রি</a></li>
+      <li><a href="#s4">৪. আর্কিটেকচার ও টপোলজি</a></li>
+      <li><a href="#s5">৫. ELI10 ও ELI15</a></li>
+      <li><a href="#s6">৬. পরিভাষা</a></li>
+      <li><a href="#s7">৭. কেন ও কীভাবে</a></li>
+      <li><a href="#s8">৮. পূর্বশর্ত</a></li>
+      <li><a href="#s9">৯. CLI/GUI ম্যাপ</a></li>
+      <li><a href="#s10">১০. ধারণা ও ডিজাইন</a></li>
+      <li><a href="#s11">১১. বেসিক কনফিগারেশন</a></li>
+      <li><a href="#s12">১২. ইন্টারমিডিয়েট কনফিগারেশন</a></li>
+      <li><a href="#s13">১৩. অ্যাডভান্সড কনফিগারেশন</a></li>
+      <li><a href="#s14">১৪. কমান্ড এনসাইক্লোপিডিয়া</a></li>
+      <li><a href="#s15">১৫. কনফিগারেশন সেফটি ও রোলব্যাক</a></li>
+      <li><a href="#s16">১৬. ভেরিফিকেশন</a></li>
+      <li><a href="#s17">১৭. মনিটরিং ও লগ</a></li>
+      <li><a href="#s18">১৮. সিকিউরিটি</a></li>
+      <li><a href="#s19">১৯. পারফরম্যান্স</a></li>
+      <li><a href="#s20">২০. Troubleshooting</a></li>
+      <li><a href="#s21">২১. ডিসিশন ট্রি</a></li>
+      <li><a href="#s22">২২. ফেইলিওর সিমুলেশন</a></li>
+      <li><a href="#s23">২৩. বেস্ট প্র্যাকটিস</a></li>
+      <li><a href="#s24">২৪. প্রোডাকশন কনফিগারেশন</a></li>
+      <li><a href="#s25">২৫. NOC সিনারিও</a></li>
+      <li><a href="#s26">২৬. বিগিনার ল্যাব</a></li>
+      <li><a href="#s27">২৭. ইন্টারমিডিয়েট ল্যাব</a></li>
+      <li><a href="#s28">২৮. অ্যাডভান্সড ল্যাব</a></li>
+      <li><a href="#s29">২৯. ইন্টারভিউ প্রশ্ন</a></li>
+      <li><a href="#s30">৩০. চ্যালেঞ্জ</a></li>
+      <li><a href="#s31">৩১. চিট শিট</a></li>
+      <li><a href="#s32">৩২. মাস্টার কমান্ড চেকলিস্ট</a></li>
+      <li><a href="#s33">৩৩. ফাইনাল চেকলিস্ট</a></li>
+    </ul>
+  </nav>
+</div>
+
+<main class="main-content" id="mainContent">
+
+<!-- 1 -->
+<section class="section open" id="s1" data-category="concept">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="true">
+    <h2><span class="section-number">১</span> ওভারভিউ ও স্কোপ</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <p><strong>MikroTik CHR (Cloud Hosted Router)</strong> হলো RouterOS-এর একটি ভার্চুয়ালাইজড সংস্করণ। <strong>EVE-NG</strong> (Emulated Virtual Environment — Next Generation) হলো একটি জনপ্রিয় নেটওয়ার্ক এমুলেশন প্ল্যাটফর্ম যা QEMU-ভিত্তিক ভার্চুয়াল ডিভাইস চালায়। EVE-NG-এ CHR ইনস্টল করলে আপনি একটি সম্পূর্ণ কার্যকর RouterOS ইনস্ট্যান্স ল্যাবে পাবেন, যা দিয়ে রাউটিং, ফায়ারওয়াল, VPN এবং অন্যান্য ফিচার নিরাপদে অনুশীলন করতে পারবেন।</p>
+
+    <h3>স্কোপ (Scope)</h3>
+    <ul>
+      <li><strong>অন্তর্ভুক্ত:</strong> EVE-NG Community-তে CHR ইমেজ আপলোড, qcow2 কনভার্সন, পারমিশন ফিক্স, নোড তৈরি, প্রাথমিক বুট, নেটওয়ার্কিং, লাইসেন্সিং, ভেরিফিকেশন, Troubleshooting এবং প্রোডাকশন বেস্ট প্র্যাকটিস।</li>
+      <li><strong>বাদ:</strong> EVE-NG Pro-নির্দিষ্ট ফিচার, জটিল রাউটিং প্রোটোকল (BGP/OSPF) কনফিগারেশন, এবং ফিজিক্যাল MikroTik হার্ডওয়্যার।</li>
+      <li><strong>ভার্সন:</strong> RouterOS v7.x (CHR)। v6-এর সাথে গুরুত্বপূর্ণ পার্থক্য থাকলে উল্লেখ করা হবে।</li>
+    </ul>
+
+    <div class="callout info">
+      <span class="callout-label">ℹ️ তথ্য</span>
+      EVE-NG Community Edition ফ্রি। CHR-এর ফ্রি লাইসেন্সে প্রতি ইন্টারফেসে ১ Mbps থ্রুপুট সীমা আছে — ল্যাব ও শেখার জন্য যথেষ্ট, কিন্তু থ্রুপুট টেস্টিং বা প্রোডাকশনের জন্য পেইড লাইসেন্স বা ৬০ দিনের ট্রায়াল প্রয়োজন।
+    </div>
+  </div>
+</section>
+
+<!-- 2 -->
+<section class="section open" id="s2" data-category="concept">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="true">
+    <h2><span class="section-number">২</span> পাঁচটি প্রধান স্তম্ভ (Five Priority Pillars)</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <p>এই হ্যান্ডবুকের পাঁচটি মূল স্তম্ভ:</p>
+    <ol>
+      <li><strong>ধারণা ও কনফিগারেশন:</strong> CHR কী, EVE-NG কীভাবে কাজ করে, এবং ধাপে ধাপে ইনস্টলেশন।</li>
+      <li><strong>ভেন্ডর-স্পেসিফিক কমান্ড:</strong> MikroTik RouterOS v7-এর সঠিক CLI কমান্ড এবং EVE-NG-এর লিনাক্স কমান্ড।</li>
+      <li><strong>হ্যান্ডস-অন ল্যাব:</strong> বাস্তব টপোলজি, কনফিগারেশন এবং টেস্ট।</li>
+      <li><strong>ভেরিফিকেশন ও Troubleshooting:</strong> প্রতিটি ধাপ যাচাই এবং সমস্যা সমাধান।</li>
+      <li><strong>বেস্ট প্র্যাকটিস ও সতর্কতা:</strong> ল্যাব ও প্রোডাকশন ব্যবহারের নিরাপদ নির্দেশিকা।</li>
+    </ol>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="section" id="s3" data-category="concept">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">৩</span> নলেজ ট্রি</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <div class="diagram">
+      CHR on EVE-NG<br>
+      ├── 1. Preparation<br>
+      │   ├── EVE-NG Installed & Running<br>
+      │   ├── CHR Image Download (Raw)<br>
+      │   └── SFTP/SCP Client (FileZilla/WinSCP)<br>
+      ├── 2. Image Deployment<br>
+      │   ├── Create Directory /opt/unetlab/addons/qemu/mikrotik-{version}/<br>
+      │   ├── Upload CHR .img file<br>
+      │   ├── Rename/Convert to hda.qcow2<br>
+      │   └── Fix Permissions<br>
+      ├── 3. Lab Creation<br>
+      │   ├── New Lab<br>
+      │   ├── Add MikroTik Node<br>
+      │   └── Connect Links<br>
+      ├── 4. First Boot<br>
+      │   ├── Login (admin/blank)<br>
+      │   └── Interface Detection (ether1, ether2...)<br>
+      ├── 5. Initial Config<br>
+      │   ├── Password Change<br>
+      │   ├── IP Addressing<br>
+      │   └── Management Access (WinBox/SSH)<br>
+      ├── 6. Licensing<br>
+      │   ├── Free (1 Mbps)<br>
+      │   ├── 60-day Trial<br>
+      │   └── Paid (P1/P10/PU)<br>
+      └── 7. Verification & Troubleshooting<br>
+          ├── Node Boots<br>
+          ├── Network Connectivity<br>
+          └── License Status
+    </div>
+  </div>
+</section>
+
+<!-- 4 -->
+<section class="section" id="s4" data-category="concept">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">৪</span> আর্কিটেকচার ও টপোলজি</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>EVE-NG-এ CHR-এর সাধারণ টপোলজি</h3>
+    <div class="diagram">
+      <span class="box">EVE-NG Server (Ubuntu)</span>
+      <span class="arrow">→</span>
+      <span class="box">QEMU/KVM</span>
+      <span class="arrow">→</span>
+      <span class="box">CHR VM (hda.qcow2)</span>
+      <br><br>
+      <span class="label">Virtual Links (EVE-NG Network Objects):</span><br>
+      <span class="box">Cloud0 (NAT/Internet)</span> <span class="arrow">↔</span> <span class="box">CHR ether1</span><br>
+      <span class="box">Switch (Internal LAN)</span> <span class="arrow">↔</span> <span class="box">CHR ether2</span>
+    </div>
+
+    <h3>কম্পোনেন্ট</h3>
+    <ul>
+      <li><strong>EVE-NG Server:</strong> Ubuntu-ভিত্তিক লিনাক্স হোস্ট যেখানে EVE-NG ইনস্টল করা আছে।</li>
+      <li><strong>QEMU/KVM:</strong> ভার্চুয়ালাইজেশন ইঞ্জিন যা CHR VM চালায়।</li>
+      <li><strong>CHR qcow2:</strong> EVE-NG-এর ডিফল্ট ডিস্ক ফরম্যাটে রূপান্তরিত CHR ইমেজ।</li>
+      <li><strong>Network Object:</strong> EVE-NG-এর ভার্চুয়াল সুইচ/ক্লাউড/লিংক।</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 5 -->
+<section class="section" id="s5" data-category="concept">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">৫</span> ELI10 ও ELI15</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>ELI10 (সহজ উপমা)</h3>
+    <p>ভাবুন, EVE-NG হলো একটি বড় খেলার মাঠ। সেখানে আপনি বিভিন্ন ভার্চুয়াল রাউটার ও সুইচ বসিয়ে নিজের ইচ্ছামতো নেটওয়ার্ক বানাতে পারেন। CHR হলো সেই মাঠে রাখা একটি ছোট রাউটার — যা দেখতে ভার্চুয়াল, কিন্তু কাজ করে আসল MikroTik রাউটারের মতোই। আপনাকে শুধু CHR-এর ইমেজ ফাইলটি EVE-NG-এর সঠিক জায়গায় রাখতে হবে, তারপর EVE-NG-এর ওয়েব ইন্টারফেস থেকে সেটি যোগ করলেই কাজ শেষ।</p>
+
+    <h3>ELI15 (প্রযুক্তিগত)</h3>
+    <p>EVE-NG QEMU-ভিত্তিক ভার্চুয়াল মেশিন চালায়। CHR-এর অফিসিয়াল Raw ডিস্ক ইমেজ (<code>.img</code>) ডাউনলোড করে সেটিকে EVE-NG-এর প্রত্যাশিত ফরম্যাট <code>qcow2</code>-তে রূপান্তর করতে হয় এবং <code>/opt/unetlab/addons/qemu/mikrotik-{version}/hda.qcow2</code> পাথে রাখতে হয়। এরপর <code>unl_wrapper -a fixpermissions</code> চালিয়ে ফাইল পারমিশন ঠিক করতে হয়। EVE-NG-এর ওয়েব GUI থেকে MikroTik RouterOS টেমপ্লেট নির্বাচন করে নোড যোগ করা যায়। CHR বুট হলে RouterOS তার নিজস্ব IP স্ট্যাক, ফায়ারওয়াল ও রাউটিং টেবিল নিয়ে চলে, এবং VirtualBox-এর মতোই WinBox/SSH/WebFig দিয়ে ম্যানেজ করা যায়।</p>
+  </div>
+</section>
+
+<!-- 6 -->
+<section class="section" id="s6" data-category="concept">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">৬</span> পরিভাষা (Terminology)</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Term</th><th>Full Form</th><th>অর্থ (Bangla)</th><th>উদ্দেশ্য</th></tr></thead>
+        <tbody>
+          <tr><td>CHR</td><td>Cloud Hosted Router</td><td>ভার্চুয়াল রাউটার ইমেজ</td><td>EVE-NG/QEMU-তে RouterOS চালানো</td></tr>
+          <tr><td>EVE-NG</td><td>Emulated Virtual Environment — Next Generation</td><td>নেটওয়ার্ক এমুলেশন প্ল্যাটফর্ম</td><td>ভার্চুয়াল ল্যাব তৈরি</td></tr>
+          <tr><td>qcow2</td><td>QEMU Copy On Write v2</td><td>QEMU-এর ডিস্ক ইমেজ ফরম্যাট</td><td>EVE-NG-এর প্রত্যাশিত ডিস্ক ফরম্যাট</td></tr>
+          <tr><td>unl_wrapper</td><td>—</td><td>EVE-NG-এর পারমিশন টুল</td><td>ফাইল পারমিশন ঠিক করা</td></tr>
+          <tr><td>Cloud0</td><td>—</td><td>EVE-NG-এর NAT/ইন্টারনেট সংযোগ</td><td>CHR-কে ইন্টারনেট দেওয়া</td></tr>
+          <tr><td>WinBox</td><td>—</td><td>MikroTik-এর GUI টুল</td><td>সহজ কনফিগারেশন</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- 7 -->
+<section class="section" id="s7" data-category="concept">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">৭</span> কেন ও কীভাবে (WHY & HOW)</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>কেন EVE-NG-এ CHR?</h3>
+    <ul>
+      <li><strong>ফ্রি ও ওপেন:</strong> EVE-NG Community ফ্রি, CHR-এর ফ্রি লাইসেন্সও ফ্রি।</li>
+      <li><strong>বাস্তবসম্মত ল্যাব:</strong> একাধিক CHR, সুইচ, ক্লাউড সংযোগ দিয়ে জটিল টপোলজি তৈরি করা যায়।</li>
+      <li><strong>প্রোডাকশন কনফিগারেশন অনুশীলন:</strong> আসল রাউটার ভাঙার ভয় ছাড়াই কনফিগারেশন টেস্ট করা যায়।</li>
+      <li><strong>স্কেল:</strong> একটি EVE-NG সার্ভারে একাধিক CHR ইনস্ট্যান্স চালানো সম্ভব।</li>
+    </ul>
+
+    <h3>কীভাবে কাজ করে?</h3>
+    <ol>
+      <li>CHR-এর Raw ডিস্ক ইমেজ (<code>.img</code>) ডাউনলোড করা হয়।</li>
+      <li>EVE-NG-এর নির্দিষ্ট ডিরেক্টরিতে আপলোড করে <code>hda.qcow2</code> নামে রাখা হয় (বা <code>qemu-img</code> দিয়ে কনভার্ট করা হয়)। [citation:2][citation:6]</li>
+      <li><code>unl_wrapper -a fixpermissions</code> চালিয়ে পারমিশন ঠিক করা হয়। [citation:6][citation:7]</li>
+      <li>EVE-NG ওয়েব GUI থেকে MikroTik RouterOS টেমপ্লেট নির্বাচন করে নোড যোগ করা হয়।</li>
+      <li>QEMU CHR VM বুট করে, RouterOS কার্নেল লোড হয়, এবং Virtual NIC-গুলো ether ইন্টারফেস হিসেবে দেখা যায়।</li>
+      <li>RouterOS তার নিজস্ব নেটওয়ার্কিং স্ট্যাক নিয়ে স্বাভাবিকভাবে কাজ করে।</li>
+    </ol>
+  </div>
+</section>
+
+<!-- 8 -->
+<section class="section" id="s8" data-category="concept">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">৮</span> পূর্বশর্ত (Prerequisites)</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>EVE-NG সার্ভার</h3>
+    <ul>
+      <li>EVE-NG Community বা Pro ইনস্টল করা ও চলমান। [citation:1]</li>
+      <li>SSH/SFTP অ্যাক্সেস (root বা sudo)।</li>
+      <li>পর্যাপ্ত ডিস্ক স্পেস (CHR ইমেজের জন্য ~১২৮ MB + qcow2 কপি)।</li>
+      <li>KVM ভার্চুয়ালাইজেশন চালু (<code>kvm-ok</code> দিয়ে যাচাই)। [citation:10]</li>
+    </ul>
+
+    <h3>ফাইল</h3>
+    <ul>
+      <li>MikroTik CHR <strong>Raw disk image</strong> (<code>chr-7.x.x.img</code>) — mikrotik.com/download থেকে। [citation:6]</li>
+      <li>SFTP/SCP ক্লায়েন্ট (FileZilla, WinSCP) অথবা <code>scp</code> কমান্ড।</li>
+    </ul>
+
+    <h3>নেটওয়ার্ক</h3>
+    <ul>
+      <li>EVE-NG সার্ভারে SSH অ্যাক্সেস।</li>
+      <li>EVE-NG ওয়েব GUI-তে ব্রাউজার অ্যাক্সেস।</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 9 -->
+<section class="section" id="s9" data-category="command">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">৯</span> CLI/GUI ম্যাপ</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>EVE-NG সার্ভার কমান্ড</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>কমান্ড</th><th>উদ্দেশ্য</th><th>কখন</th></tr></thead>
+        <tbody>
+          <tr><td><code>mkdir -p /opt/unetlab/addons/qemu/mikrotik-7.x.x/</code></td><td>CHR ডিরেক্টরি তৈরি</td><td>ইমেজ আপলোডের আগে</td></tr>
+          <tr><td><code>cd /opt/unetlab/addons/qemu/mikrotik-7.x.x/</code></td><td>ডিরেক্টরিতে প্রবেশ</td><td>ফাইল ম্যানেজমেন্ট</td></tr>
+          <tr><td><code>mv chr-7.x.x.img hda.qcow2</code></td><td>ইমেজ রিনেম/কনভার্ট</td><td>আপলোডের পর</td></tr>
+          <tr><td><code>/opt/unetlab/wrappers/unl_wrapper -a fixpermissions</code></td><td>পারমিশন ঠিক করা</td><td>সব ফাইল স্থাপনের পর</td></tr>
+          <tr><td><code>kvm-ok</code></td><td>KVM ভার্চুয়ালাইজেশন চেক</td><td>Troubleshooting</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>EVE-NG ওয়েব GUI</h3>
+    <ul>
+      <li><strong>Node:</strong> Add an object → Node → MikroTik RouterOS। [citation:6]</li>
+      <li><strong>Network:</strong> Add an object → Network → Cloud0/Switch।</li>
+    </ul>
+
+    <h3>RouterOS CLI (CHR-এর ভেতরে)</h3>
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">RouterOS v7 CLI Menu</span></div>
+      <pre><code>/interface    — ইন্টারফেস দেখুন/কনফিগার করুন
+/ip           — IP অ্যাড্রেস, DHCP, রাউটিং
+/system       — হোস্টনেম, লাইসেন্স, ইউজার
+/ip firewall  — ফায়ারওয়াল রুল
+/ip route     — রাউটিং টেবিল
+/log          — লগ দেখুন
+/export       — কনফিগারেশন এক্সপোর্ট</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- 10 -->
+<section class="section" id="s10" data-category="config">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">১০</span> ধারণা ও ডিজাইন</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>EVE-NG নেটওয়ার্ক অবজেক্ট</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>অবজেক্ট</th><th>ব্যবহার</th><th>CHR-এর সাথে</th></tr></thead>
+        <tbody>
+          <tr><td>Cloud0</td><td>NAT/ইন্টারনেট</td><td>ether1 → Cloud0</td></tr>
+          <tr><td>Network (Switch)</td><td>ভার্চুয়াল LAN</td><td>ether2 → Switch → অন্যান্য নোড</td></tr>
+          <tr><td>Internal</td><td>শুধু ল্যাবের ভেতরে</td><td>বহু CHR-এর মধ্যে সংযোগ</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout warning">
+      <span class="callout-label">⚠️ সতর্কতা</span>
+      EVE-NG-এ CHR-এর ইন্টারফেস নম্বর (ether1, ether2...) নোড তৈরি করার সময় EVE-NG যে ক্রমে NIC দেয় তার উপর নির্ভর করে। ল্যাবে সংযোগ করার আগে <code>/interface print</code> দিয়ে নিশ্চিত করুন কোন ইন্টারফেস কোন লিংকে যাচ্ছে।
+    </div>
+  </div>
+</section>
+
+<!-- 11 -->
+<section class="section" id="s11" data-category="config">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">১১</span> বেসিক কনফিগারেশন (EVE-NG-এ CHR ইনস্টল)</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>ধাপ ১: CHR ইমেজ ডাউনলোড</h3>
+    <p>MikroTik-এর অফিসিয়াল ডাউনলোড পেজ থেকে <strong>Cloud Hosted Router</strong> সেকশনে যান এবং <strong>Raw disk image</strong> (<code>.img</code>) ডাউনলোড করুন। [citation:6]</p>
+
+    <h3>ধাপ ২: EVE-NG সার্ভারে আপলোড ও ডিরেক্টরি তৈরি</h3>
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">EVE-NG Server — Directory & Upload</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+      <pre><code># EVE-NG সার্ভারে SSH করুন
+ssh root@<EVE-NG-IP>
+
+# CHR-এর জন্য ডিরেক্টরি তৈরি করুন (ভার্সন নম্বর মিলিয়ে)
+mkdir -p /opt/unetlab/addons/qemu/mikrotik-7.19.4/
+
+# CHR .img ফাইলটি SFTP/SCP দিয়ে আপলোড করুন
+# উদাহরণ: FileZilla বা scp ব্যবহার করে
+# scp chr-7.19.4.img root@<EVE-NG-IP>:/opt/unetlab/addons/qemu/mikrotik-7.19.4/</code></pre>
+    </div>
+
+    <h3>ধাপ ৩: ইমেজ কনভার্ট/রিনেম ও পারমিশন</h3>
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">EVE-NG Server — Convert & Fix Permissions</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+      <pre><code>cd /opt/unetlab/addons/qemu/mikrotik-7.19.4/
+
+# .img ফাইলকে hda.qcow2 নামে রিনেম করুন
+mv chr-7.19.4.img hda.qcow2
+
+# অথবা qemu-img দিয়ে কনভার্ট করুন (যদি সরাসরি রিনেম কাজ না করে)
+# qemu-img convert -f raw chr-7.19.4.img -O qcow2 hda.qcow2
+
+# পারমিশন ঠিক করুন (অবশ্যই করতে হবে)
+/opt/unetlab/wrappers/unl_wrapper -a fixpermissions</code></pre>
+    </div>
+
+    <div class="callout info">
+      <span class="callout-label">ℹ️ তথ্য</span>
+      ডিরেক্টরির নাম অবশ্যই <code>mikrotik-<version></code> ফরম্যাটে হতে হবে (যেমন <code>mikrotik-7.19.4</code>)। [citation:1][citation:11] ফাইলের নাম হতে হবে <code>hda.qcow2</code> — EVE-NG এটি প্রত্যাশা করে। [citation:2][citation:6]
+    </div>
+
+    <h3>ধাপ ৪: EVE-NG ওয়েব GUI-তে নোড তৈরি</h3>
+    <ol>
+      <li>ব্রাউজারে EVE-NG-এর IP-তে যান এবং লগইন করুন।</li>
+      <li>একটি নতুন ল্যাব তৈরি করুন।</li>
+      <li><strong>Add an object</strong> → <strong>Node</strong> → <strong>MikroTik RouterOS</strong> নির্বাচন করুন। [citation:6]</li>
+      <li>Image ড্রপডাউনে ইনস্টল করা ভার্সন (<code>7.19.4</code>) নির্বাচন করুন।</li>
+      <li>RAM (ন্যূনতম ৫১২ MB) ও CPU (১-২) সেট করুন।</li>
+      <li>Save করুন।</li>
+    </ol>
+
+    <h3>ধাপ ৫: প্রথম বুট</h3>
+    <p>নোডে ডাবল-ক্লিক করে কনসোল খুলুন। ডিফল্ট লগইন:</p>
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">RouterOS Login</span></div>
+      <pre><code>Username: admin
+Password: (খালি — শুধু Enter চাপুন)</code></pre>
+    </div>
+    <p>লগইন করার পর অবিলম্বে পাসওয়ার্ড পরিবর্তন করুন: <code>/password</code></p>
+
+    <h3>ধাপ ৬: প্রাথমিক নেটওয়ার্কিং</h3>
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">RouterOS v7 — Interface Check</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+      <pre><code>/interface print</code></pre>
+    </div>
+    <p>EVE-NG-এর লিংক অনুযায়ী <code>ether1</code>, <code>ether2</code> ইত্যাদি দেখা যাবে।</p>
+
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">RouterOS v7 — Cloud0 (NAT) থেকে IP নিন</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+      <pre><code>/ip dhcp-client add interface=ether1 disabled=no</code></pre>
+    </div>
+
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">RouterOS v7 — IP যাচাই</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+      <pre><code>/ip address print</code></pre>
+    </div>
+    <p>Cloud0-তে DHCP থাকলে সাধারণত একটি IP দেখাবে।</p>
+  </div>
+</section>
+
+<!-- 12 -->
+<section class="section" id="s12" data-category="config">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">১২</span> ইন্টারমিডিয়েট কনফিগারেশন</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>একাধিক নেটওয়ার্ক অবজেক্ট</h3>
+    <p>EVE-NG-এ একটি CHR নোডে একাধিক ইন্টারফেস যোগ করে সেগুলোকে আলাদা Network/Cloud অবজেক্টে সংযুক্ত করা যায়।</p>
+
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">RouterOS v7 — স্ট্যাটিক IP কনফিগার</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+      <pre><code>/ip address add address=192.168.10.1/24 interface=ether2
+/ip address add address=10.10.10.1/24 interface=ether3</code></pre>
+    </div>
+
+    <h3>ফায়ারওয়াল বেসিক</h3>
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">RouterOS v7 — বেসিক ফায়ারওয়াল রুল</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+      <pre><code>/ip firewall filter
+add chain=input action=accept connection-state=established,related
+add chain=input action=accept protocol=tcp dst-port=8291 src-address=192.168.10.0/24
+add chain=input action=drop in-interface=ether1</code></pre>
+    </div>
+
+    <div class="callout warning">
+      <span class="callout-label">⚠️ সতর্কতা</span>
+      শেষ রুলটি <code>ether1</code> (NAT/Internet) থেকে সব ইনপুট ড্রপ করে। নিশ্চিত করুন যে আপনি Internal/Management ইন্টারফেস দিয়ে অ্যাক্সেস রাখছেন, নইলে লকআউট হতে পারেন।
+    </div>
+  </div>
+</section>
+
+<!-- 13 -->
+<section class="section" id="s13" data-category="config">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">১৩</span> অ্যাডভান্সড কনফিগারেশন</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>লাইসেন্সিং</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>লাইসেন্স</th><th>থ্রুপুট</th><th>মূল্য</th><th>নোট</th></tr></thead>
+        <tbody>
+          <tr><td>Free</td><td>1 Mbps/interface</td><td>ফ্রি</td><td>শেখার জন্য যথেষ্ট</td></tr>
+          <tr><td>P1</td><td>1 Gbps</td><td>$45</td><td>পারপেচুয়াল</td></tr>
+          <tr><td>P10</td><td>10 Gbps</td><td>$95</td><td>পারপেচুয়াল</td></tr>
+          <tr><td>P-Unlimited</td><td>আনলিমিটেড</td><td>$250</td><td>সর্বোচ্চ স্তর</td></tr>
+          <tr><td>60-day Trial</td><td>P-Unlimited</td><td>ফ্রি</td><td>MikroTik অ্যাকাউন্ট প্রয়োজন</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>ট্রায়াল লাইসেন্স চালু করা</h3>
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">RouterOS v7 — License Renew (Trial)</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+      <pre><code>/system/license/renew account=your_mikrotik_email password=your_password level=p1</code></pre>
+    </div>
+    <p>সফল হলে <code>/system/license/print</code> কমান্ডে <code>level: p1</code> এবং <code>next-renewal-at</code> দেখাবে।</p>
+
+    <div class="callout warning">
+      <span class="callout-label">⚠️ সতর্কতা</span>
+      ট্রায়াল ৬০ দিনের। মেয়াদ শেষ হলে CHR চলতে থাকবে কিন্তু ফ্রি ১ Mbps-এ ফিরে যাবে এবং RouterOS আপগ্রেড করা যাবে না।
+    </div>
+  </div>
+</section>
+
+<!-- 14 -->
+<section class="section" id="s14" data-category="command">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">১৪</span> কমান্ড এনসাইক্লোপিডিয়া (MikroTik RouterOS v7)</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">COMMAND #1 — Interface Print</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+      <pre><code>/interface print</code></pre>
+    </div>
+    <p><strong>উদ্দেশ্য:</strong> সব ইন্টারফেস এবং তাদের স্ট্যাটাস দেখুন।<br>
+    <strong>কখন:</strong> প্রথম বুটের পর, বা নেটওয়ার্ক সমস্যায়।<br>
+    <strong>প্রত্যাশিত:</strong> ether1, ether2... দেখা যাবে।<br>
+    <strong>Troubleshooting:</strong> কোনো ইন্টারফেস না দেখালে EVE-NG নোডের লিংক চেক করুন।</p>
+
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">COMMAND #2 — IP Address Print</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+      <pre><code>/ip address print</code></pre>
+    </div>
+    <p><strong>উদ্দেশ্য:</strong> কনফিগার করা IP অ্যাড্রেস দেখুন।<br>
+    <strong>প্রত্যাশিত:</strong> DHCP থেকে পাওয়া IP।</p>
+
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">COMMAND #3 — License Print</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+      <pre><code>/system license print</code></pre>
+    </div>
+    <p><strong>উদ্দেশ্য:</strong> বর্তমান লাইসেন্স স্তর ও মেয়াদ দেখুন।<br>
+    <strong>প্রত্যাশিত:</strong> Free লাইসেন্সে <code>level: free</code>।</p>
+
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">COMMAND #4 — Export Configuration</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+      <pre><code>/export compact</code></pre>
+    </div>
+    <p><strong>উদ্দেশ্য:</strong> সম্পূর্ণ কনফিগারেশন টেক্সট হিসেবে দেখুন।<br>
+    <strong>ব্যবহার:</strong> ব্যাকআপ, ডকুমেন্টেশন, বা অন্য ডিভাইসে রিস্টোরের জন্য।</p>
+
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">COMMAND #5 — System Resource Print</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+      <pre><code>/system resource print</code></pre>
+    </div>
+    <p><strong>উদ্দেশ্য:</strong> CPU, RAM, আপটাইম, সংস্করণ দেখুন।<br>
+    <strong>প্রত্যাশিত:</strong> <code>version: 7.x</code>, <code>cpu-load</code> কম।</p>
+  </div>
+</section>
+
+<!-- 15 -->
+<section class="section" id="s15" data-category="security">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">১৫</span> কনফিগারেশন সেফটি ও রোলব্যাক</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>EVE-NG ল্যাব স্ন্যাপশট</h3>
+    <p>EVE-NG-তে ল্যাবের স্ন্যাপশট নেওয়ার সুবিধা আছে। গুরুত্বপূর্ণ পরিবর্তনের আগে ল্যাব স্ন্যাপশট নিন।</p>
+
+    <h3>RouterOS কনফিগারেশন এক্সপোর্ট</h3>
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">RouterOS v7 — Export to File</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+      <pre><code>/export file=backup-before-change</code></pre>
+    </div>
+    <p>ফাইলটি EVE-NG সার্ভার থেকে SCP/SFTP দিয়ে হোস্টে কপি করুন।</p>
+
+    <div class="callout danger">
+      <span class="callout-label">🚨 বিপদ</span>
+      <code>/system reset</code> চালালে সম্পূর্ণ কনফিগারেশন মুছে যাবে এবং ডিফল্টে ফিরে যাবে। শুধুমাত্র ল্যাবে ব্যবহার করুন, প্রোডাকশনে নয়।
+    </div>
+  </div>
+</section>
+
+<!-- 16 -->
+<section class="section" id="s16" data-category="verify">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">১৬</span> ভেরিফিকেশন</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>চেক</th><th>কমান্ড</th><th>সুস্থ ফল</th><th>অসুস্থ ফল</th><th>পরবর্তী পদক্ষেপ</th></tr></thead>
+        <tbody>
+          <tr><td>নোড চালু</td><td>EVE-NG GUI</td><td>Green/Running</td><td>Grey/Stopped</td><td>লগ ও KVM চেক</td></tr>
+          <tr><td>ইন্টারফেস</td><td><code>/interface print</code></td><td>ether1 present</td><td>কোনো ইন্টারফেস নেই</td><td>EVE-NG লিংক চেক</td></tr>
+          <tr><td>IP</td><td><code>/ip address print</code></td><td>IP আছে</td><td>IP নেই</td><td>DHCP/স্ট্যাটিক কনফিগার</td></tr>
+          <tr><td>লাইসেন্স</td><td><code>/system license print</code></td><td>Free/P1</td><td>Error</td><td>MikroTik অ্যাকাউন্ট চেক</td></tr>
+          <tr><td>Ping (Cloud0)</td><td><code>/ping 8.8.8.8</code></td><td>Reply</td><td>Timeout</td><td>Cloud0/NAT চেক</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- 17 -->
+<section class="section" id="s17" data-category="verify">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">১৭</span> মনিটরিং ও লগ</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">RouterOS v7 — Log Print</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+      <pre><code>/log print</code></pre>
+    </div>
+    <p>বুট সমস্যা, লাইসেন্স ত্রুটি, বা ইন্টারফেস ইস্যু দেখতে।</p>
+
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">RouterOS v7 — Interface Monitor</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+      <pre><code>/interface monitor-traffic ether1</code></pre>
+    </div>
+    <p>রিয়েল-টাইম ট্রাফিক দেখুন। থ্রুপুট লাইসেন্স সীমার কাছাকাছি কিনা বোঝা যায়।</p>
+  </div>
+</section>
+
+<!-- 18 -->
+<section class="section" id="s18" data-category="security">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">১৮</span> সিকিউরিটি</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>প্রাথমিক হার্ডেনিং</h3>
+    <ul>
+      <li><strong>পাসওয়ার্ড:</strong> প্রথম লগইনে <code>admin</code>-এর পাসওয়ার্ড সেট করুন।</li>
+      <li><strong>WinBox পোর্ট:</strong> ডিফল্ট 8291 পরিবর্তন করুন অথবা IP-দ্বারা সীমিত করুন।</li>
+      <li><strong>Firewall:</strong> শুধুমাত্র বিশ্বস্ত সোর্স থেকে ম্যানেজমেন্ট অ্যাক্সেস অনুমোদন করুন।</li>
+      <li><strong>Services:</strong> অপ্রয়োজনীয় সার্ভিস (Telnet, FTP) বন্ধ করুন।</li>
+    </ul>
+
+    <div class="code-wrapper">
+      <div class="code-header"><span class="code-label">RouterOS v7 — Disable Insecure Services</span><button class="copy-btn" onclick="copyCode(this)">কপি</button></div>
+      <pre><code>/ip service disable telnet,ftp,www
+/ip service set winbox address=192.168.10.0/24</code></pre>
+    </div>
+
+    <div class="callout noc">
+      <span class="callout-label">🛡️ NOC টিপ</span>
+      প্রোডাকশনে CHR ব্যবহার করলে EVE-NG-এর Cloud0-তে রেখে বাইরে থেকে সরাসরি ম্যানেজমেন্ট অ্যাক্সেস দেবেন না। VPN বা ব্যাস্টিয়ন হোস্ট ব্যবহার করুন।
+    </div>
+  </div>
+</section>
+
+<!-- 19 -->
+<section class="section" id="s19" data-category="production">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">১৯</span> পারফরম্যান্স</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>EVE-NG পারফরম্যান্স টিউনিং</h3>
+    <ul>
+      <li><strong>CPU:</strong> একাধিক vCPU দিলে RouterOS মাল্টি-কোর ব্যবহার করতে পারে।</li>
+      <li><strong>RAM:</strong> ৫১২ MB ন্যূনতম, ১০২৪ MB প্রস্তাবিত।</li>
+      <li><strong>NIC টাইপ:</strong> EVE-NG-এর MikroTik টেমপ্লেট ডিফল্ট NIC ব্যবহার করে (e1000-82545em)। [citation:3]</li>
+      <li><strong>Host I/O:</strong> qcow2 ফাইল SSD-তে রাখুন।</li>
+      <li><strong>KVM:</strong> <code>kvm-ok</code> দিয়ে নিশ্চিত করুন KVM সক্রিয়। [citation:10]</li>
+    </ul>
+
+    <h3>লাইসেন্স থ্রুপুট সীমা</h3>
+    <p>ফ্রি লাইসেন্সে ১ Mbps সীমা চালু থাকলে উচ্চ থ্রুপুট আশা করবেন না। <code>/system license print</code> দিয়ে লাইসেন্স যাচাই করুন।</p>
+  </div>
+</section>
+
+<!-- 20 -->
+<section class="section" id="s20" data-category="troubleshoot">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">২০</span> Troubleshooting</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>সাধারণ সমস্যা ও সমাধান</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>লক্ষণ</th><th>সম্ভাব্য কারণ</th><th>প্রথম চেক</th><th>কমান্ড</th><th>সমাধান</th></tr></thead>
+        <tbody>
+          <tr><td>নোড চালু হয় না / Greys out</td><td>KVM/Nested Virtualization বন্ধ</td><td><code>kvm-ok</code></td><td><code>kvm-ok</code></td><td>BIOS/VM-এ VT-x চালু করুন [citation:10]</td></tr>
+          <tr><td>iPXE বুট লুপ</td><td>ভুল ফাইল (.npk) বা ইমেজ ফরম্যাট</td><td>ফাইল নাম</td><td><code>ls -la</code></td><td>সঠিক CHR .img ডাউনলোড করে <code>hda.qcow2</code> করুন [citation:8]</td></tr>
+          <tr><td>MikroTik টেমপ্লেট পাওয়া যায় না</td><td>ডিরেক্টরি নাম ভুল</td><td>ডিরেক্টরি</td><td><code>ls /opt/unetlab/addons/qemu/</code></td><td><code>mikrotik-{version}</code> ফরম্যাটে তৈরি করুন [citation:11]</td></tr>
+          <tr><td>নোড চালু হয় কিন্তু কনসোল নেই</td><td>পারমিশন সমস্যা</td><td><code>fixpermissions</code></td><td><code>unl_wrapper -a fixpermissions</code></td><td>পারমিশন ঠিক করুন [citation:6]</td></tr>
+          <tr><td>ধীর গতি</td><td>ফ্রি লাইসেন্স 1 Mbps</td><td>License level</td><td><code>/system license print</code></td><td>ট্রায়াল/পেইড লাইসেন্স</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- 21 -->
+<section class="section" id="s21" data-category="troubleshoot">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">২১</span> ডিসিশন ট্রি</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <div class="diagram">
+      EVE-NG Node Start<br>
+      ├── Node Grey/Stopped? <span class="arrow">→</span> Yes <span class="arrow">→</span> <code>kvm-ok</code> চেক <span class="arrow">→</span> KVM/BIOS VT-x চালু<br>
+      └── No (Running)<br>
+          ├── Console shows iPXE? <span class="arrow">→</span> Yes <span class="arrow">→</span> ভুল ফাইল <span class="arrow">→</span> সঠিক CHR .img → hda.qcow2<br>
+          └── No (RouterOS Login)<br>
+              ├── Login? <span class="arrow">→</span> No <span class="arrow">→</span> admin/blank, keyboard<br>
+              └── Yes<br>
+                  ├── Interface? <span class="arrow">→</span> No <span class="arrow">→</span> EVE-NG লিংক চেক<br>
+                  └── Yes<br>
+                      ├── IP? <span class="arrow">→</span> No <span class="arrow">→</span> DHCP/static config<br>
+                      └── Yes<br>
+                          ├── Ping 8.8.8.8? <span class="arrow">→</span> No <span class="arrow">→</span> Cloud0/NAT/route<br>
+                          └── Yes <span class="arrow">→</span> ✅ Working
+    </div>
+  </div>
+</section>
+
+<!-- 22 -->
+<section class="section" id="s22" data-category="troubleshoot">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">২২</span> ফেইলিওর সিমুলেশন</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>সিমুলেশন ১: ভুল ডিরেক্টরি নাম</h3>
+    <p><strong>সিম্পটম:</strong> EVE-NG-এ MikroTik টেমপ্লেট ধূসর/নিষ্ক্রিয়।<br>
+    <strong>কারণ:</strong> ডিরেক্টরি <code>mikrotik-7.x.x</code> ফরম্যাটে নেই। [citation:11]<br>
+    <strong>ফিক্স:</strong> <code>mv mikrotik mikrotik-7.19.4</code> করে <code>fixpermissions</code> চালান।</p>
+
+    <h3>সিমুলেশন ২: KVM বন্ধ</h3>
+    <p><strong>সিম্পটম:</strong> নোড Start করলে সাথে সাথে Stop হয়ে যায়।<br>
+    <strong>চেক:</strong> <code>kvm-ok</code> চালান। [citation:10]<br>
+    <strong>ফিক্স:</strong> BIOS-এ VT-x/AMD-V চালু করুন, EVE-NG VM-এ Nested Virtualization চালু করুন।</p>
+
+    <h3>সিমুলেশন ৩: ভুল ফাইল (.npk)</h3>
+    <p><strong>সিম্পটম:</strong> iPXE বুট লুপ, "Boot failed"। [citation:8]<br>
+    <strong>কারণ:</strong> RouterOS package (.npk) ডাউনলোড করা হয়েছে, CHR Raw image নয়।<br>
+    <strong>ফিক্স:</strong> mikrotik.com/download থেকে <strong>Cloud Hosted Router → Raw</strong> ডাউনলোড করুন।</p>
+
+    <h3>সিমুলেশন ৪: পারমিশন সমস্যা</h3>
+    <p><strong>সিম্পটম:</strong> নোড চালু হয় কিন্তু কনসোল কালো/ফাঁকা।<br>
+    <strong>ফিক্স:</strong> <code>/opt/unetlab/wrappers/unl_wrapper -a fixpermissions</code> চালান। [citation:6]</p>
+
+    <h3>সিমুলেশন ৫: WinBox সংযোগ নেই</h3>
+    <p><strong>সিম্পটম:</strong> হোস্ট থেকে WinBox দিয়ে CHR-এ সংযোগ করা যাচ্ছে না।<br>
+    <strong>কারণ:</strong> Cloud0 NAT মোডে হোস্ট থেকে সরাসরি অ্যাক্সেস নেই।<br>
+    <strong>ফিক্স:</strong> EVE-NG-এ একটি Network অবজেক্ট যোগ করে হোস্টের সাথে সংযুক্ত করুন অথবা EVE-NG-এর ভেতরে একটি ম্যানেজমেন্ট VM ব্যবহার করুন।</p>
+  </div>
+</section>
+
+<!-- 23 -->
+<section class="section" id="s23" data-category="production">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">২৩</span> বেস্ট প্র্যাকটিস</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>ল্যাব vs প্রোডাকশন</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>দিক</th><th>ল্যাব (EVE-NG)</th><th>প্রোডাকশন</th></tr></thead>
+        <tbody>
+          <tr><td>ব্যাকআপ</td><td>EVE-NG ল্যাব স্ন্যাপশট যথেষ্ট</td><td>নিয়মিত এক্সপোর্ট + অফসাইট</td></tr>
+          <tr><td>পরিবর্তন</td><td>স্বাধীন</td><td>চেঞ্জ উইন্ডো + পিয়ার রিভিউ</td></tr>
+          <tr><td>মনিটরিং</td><td>ঐচ্ছিক</td><td>বাধ্যতামূলক</td></tr>
+          <tr><td>সিকিউরিটি</td><td>ঢিলেঢালা</td><td>কঠোর</td></tr>
+          <tr><td>লাইসেন্স</td><td>ফ্রি/ট্রায়াল</td><td>পেইড (P1/P10/PU)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>মূল সুপারিশ</h3>
+    <ul>
+      <li>প্রথম দিনেই admin পাসওয়ার্ড সেট করুন।</li>
+      <li>EVE-NG ল্যাব স্ন্যাপশট নিয়মিত নিন।</li>
+      <li><code>/export</code> নিয়মিত সংরক্ষণ করুন।</li>
+      <li>ফ্রি লাইসেন্সের সীমাবদ্ধতা সম্পর্কে সচেতন থাকুন।</li>
+      <li>Cloud0-তে রেখে বাইরে থেকে সরাসরি ম্যানেজমেন্ট অ্যাক্সেস দেবেন না।</li>
+      <li>EVE-NG সার্ভারে <code>kvm-ok</code> নিয়মিত চেক করুন।</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 24 -->
+<section class="section" id="s24" data-category="production">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">২৪</span> প্রোডাকশন কনফিগারেশন</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <p>প্রোডাকশনে CHR ব্যবহারের আগে:</p>
+    <ol>
+      <li>P1 বা তার বেশি লাইসেন্স কিনুন।</li>
+      <li>EVE-NG-এর পরিবর্তে সরাসরি KVM/Proxmox/VMware-এ CHR চালান (EVE-NG মূলত ল্যাবের জন্য)।</li>
+      <li>ফায়ারওয়াল হার্ডেনিং প্রয়োগ করুন।</li>
+      <li>নিয়মিত কনফিগারেশন ব্যাকআপ সেটআপ করুন।</li>
+      <li>মনিটরিং (SNMP, Syslog) চালু করুন।</li>
+    </ol>
+
+    <div class="callout production">
+      <span class="callout-label">🚀 প্রোডাকশন</span>
+      EVE-NG মূলত ল্যাব ও টেস্টিং প্ল্যাটফর্ম। প্রোডাকশন রাউটার হিসেবে CHR চালাতে চাইলে সরাসরি হাইপারভাইজার (Proxmox, VMware ESXi, KVM) ব্যবহার করুন — EVE-NG-এর এমুলেশন লেয়ার অতিরিক্ত ওভারহেড যোগ করে।
+    </div>
+  </div>
+</section>
+
+<!-- 25 -->
+<section class="section" id="s25" data-category="production">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">২৫</span> NOC সিনারিও</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <p><strong>সিনারিও:</strong> একটি ট্রেনিং ল্যাবে EVE-NG-তে একাধিক CHR নোড ব্যবহার করে OSPF টপোলজি তৈরি করা হচ্ছে। হঠাৎ একটি CHR নোড Start করলে সাথে সাথে Stop হয়ে যায়।</p>
+    <p><strong>প্রথম চেক:</strong> EVE-NG সার্ভারে <code>kvm-ok</code> চালান। [citation:10]</p>
+    <p><strong>রুট কজ:</strong> KVM ভার্চুয়ালাইজেশন বন্ধ (BIOS-এ VT-x নিষ্ক্রিয় অথবা EVE-NG VM-এ Nested Virtualization বন্ধ)।</p>
+    <p><strong>সমাধান:</strong> BIOS-এ VT-x/AMD-V চালু করুন এবং EVE-NG VM-এর সেটিংসে "Virtualize Intel VT-x/EPT" চালু করুন। [citation:14]</p>
+    <p><strong>প্রতিরোধ:</strong> EVE-NG সার্ভার সেটআপের সময়ই KVM যাচাই করুন এবং BIOS সেটিংস ডকুমেন্ট করুন।</p>
+  </div>
+</section>
+
+<!-- 26 -->
+<section class="section" id="s26" data-category="lab">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">২৬</span> বিগিনার ল্যাব</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <p><span class="badge beginner">Beginner</span></p>
+    <h3>উদ্দেশ্য</h3>
+    <p>EVE-NG-এ CHR ইনস্টল করে প্রথম বুট এবং Cloud0 (NAT)-এর মাধ্যমে ইন্টারনেট অ্যাক্সেস নিশ্চিত করা।</p>
+
+    <h3>টপোলজি</h3>
+    <div class="diagram">
+      <span class="box">EVE-NG Cloud0 (NAT)</span>
+      <span class="arrow">→</span>
+      <span class="box">CHR ether1</span>
+      <span class="arrow">→</span>
+      <span class="box">Internet</span>
+    </div>
+
+    <h3>ধাপ</h3>
+    <ol>
+      <li>CHR Raw image (<code>.img</code>) ডাউনলোড করুন।</li>
+      <li>EVE-NG সার্ভারে <code>/opt/unetlab/addons/qemu/mikrotik-7.x.x/</code> ডিরেক্টরি তৈরি করুন।</li>
+      <li><code>.img</code> ফাইল আপলোড করে <code>hda.qcow2</code> নামে রিনেম করুন।</li>
+      <li><code>/opt/unetlab/wrappers/unl_wrapper -a fixpermissions</code> চালান।</li>
+      <li>EVE-NG GUI-তে নতুন ল্যাব তৈরি করুন।</li>
+      <li>MikroTik RouterOS নোড যোগ করুন, Cloud0-এর সাথে ether1 সংযুক্ত করুন।</li>
+      <li>নোড চালু করুন, admin/blank দিয়ে লগইন করুন।</li>
+      <li><code>/interface print</code> দিয়ে ether1 দেখুন।</li>
+      <li><code>/ip dhcp-client add interface=ether1 disabled=no</code></li>
+      <li><code>/ip address print</code> দিয়ে IP যাচাই করুন।</li>
+      <li><code>/ping 8.8.8.8</code> দিয়ে ইন্টারনেট টেস্ট করুন।</li>
+    </ol>
+
+    <h3>সফলতার মাপকাঠি</h3>
+    <ul class="checklist">
+      <li><input type="checkbox" id="lab1-1"><label for="lab1-1">EVE-NG-এ MikroTik টেমপ্লেট সক্রিয়</label></li>
+      <li><input type="checkbox" id="lab1-2"><label for="lab1-2">CHR নোড চালু হয়েছে</label></li>
+      <li><input type="checkbox" id="lab1-3"><label for="lab1-3">ether1 দৃশ্যমান</label></li>
+      <li><input type="checkbox" id="lab1-4"><label for="lab1-4">IP পাওয়া গেছে</label></li>
+      <li><input type="checkbox" id="lab1-5"><label for="lab1-5">8.8.8.8-এ ping সফল</label></li>
+    </ul>
+
+    <h3>ক্লিনআপ</h3>
+    <p>ল্যাব মুছে ফেলুন অথবা EVE-NG ল্যাব স্ন্যাপশট নিন।</p>
+  </div>
+</section>
+
+<!-- 27 -->
+<section class="section" id="s27" data-category="lab">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">২৭</span> ইন্টারমিডিয়েট ল্যাব</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <p><span class="badge intermediate">Intermediate</span></p>
+    <h3>উদ্দেশ্য</h3>
+    <p>দুটি CHR নোড এবং একটি Network (Switch) ব্যবহার করে দুটি সাবনেটের মধ্যে রাউটিং কনফিগার করা।</p>
+
+    <h3>টপোলজি</h3>
+    <div class="diagram">
+      <span class="box">CHR-1 ether1 (Cloud0)</span><br>
+      <span class="box">CHR-1 ether2 (10.0.0.1/24)</span>
+      <span class="arrow">← Network →</span>
+      <span class="box">CHR-2 ether1 (10.0.0.2/24)</span><br>
+      <span class="box">CHR-2 ether2 (192.168.20.1/24)</span>
+      <span class="arrow">← Network →</span>
+      <span class="box">Client (192.168.20.10)</span>
+    </div>
+
+    <h3>ধাপ</h3>
+    <ol>
+      <li>দুটি CHR নোড যোগ করুন।</li>
+      <li>CHR-1: <code>/ip address add address=10.0.0.1/24 interface=ether2</code></li>
+      <li>CHR-2: <code>/ip address add address=10.0.0.2/24 interface=ether1</code></li>
+      <li>CHR-2: <code>/ip address add address=192.168.20.1/24 interface=ether2</code></li>
+      <li>CHR-1: <code>/ip route add dst-address=192.168.20.0/24 gateway=10.0.0.2</code></li>
+      <li>CHR-2: <code>/ip route add dst-address=0.0.0.0/0 gateway=10.0.0.1</code></li>
+      <li>CHR-1: <code>/ip firewall nat add chain=srcnat out-interface=ether1 action=masquerade</code></li>
+      <li>ক্লায়েন্ট থেকে <code>ping 8.8.8.8</code> টেস্ট করুন।</li>
+    </ol>
+
+    <h3>সফলতার মাপকাঠি</h3>
+    <ul class="checklist">
+      <li><input type="checkbox" id="lab2-1"><label for="lab2-1">CHR-1 ও CHR-2-এর মধ্যে ping সফল</label></li>
+      <li><input type="checkbox" id="lab2-2"><label for="lab2-2">ক্লায়েন্ট থেকে CHR-1-এ ping সফল</label></li>
+      <li><input type="checkbox" id="lab2-3"><label for="lab2-3">ক্লায়েন্ট থেকে ইন্টারনেট ping সফল (NAT)</label></li>
+    </ul>
+  </div>
+</section>
+
+<!-- 28 -->
+<section class="section" id="s28" data-category="lab">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">২৮</span> অ্যাডভান্সড ল্যাব</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <p><span class="badge advanced">Advanced</span></p>
+    <h3>উদ্দেশ্য</h3>
+    <p>CHR-কে DHCP সার্ভার হিসেবে কনফিগার করে একটি Internal Network-এ ক্লায়েন্টকে IP দেওয়া এবং NAT-এর মাধ্যমে ইন্টারনেট অ্যাক্সেস দেওয়া।</p>
+
+    <h3>ধাপ</h3>
+    <ol>
+      <li>CHR-এ ether1 = Cloud0, ether2 = Internal Network।</li>
+      <li><code>/ip address add address=10.10.10.1/24 interface=ether2</code></li>
+      <li><code>/ip pool add name=lab-pool ranges=10.10.10.100-10.10.10.200</code></li>
+      <li><code>/ip dhcp-server add interface=ether2 address-pool=lab-pool disabled=no</code></li>
+      <li><code>/ip dhcp-server network add address=10.10.10.0/24 gateway=10.10.10.1</code></li>
+      <li><code>/ip firewall nat add chain=srcnat out-interface=ether1 action=masquerade</code></li>
+      <li>ক্লায়েন্ট VM/VPCS বুট করে DHCP থেকে IP পেয়েছে কিনা দেখুন।</li>
+    </ol>
+
+    <h3>চ্যালেঞ্জ</h3>
+    <p>ক্লায়েন্ট থেকে <code>ping 8.8.8.8</code> কাজ করছে কিন্তু <code>ping google.com</code> কাজ করছে না — কেন? সমাধান করুন।</p>
+  </div>
+</section>
+
+<!-- 29 -->
+<section class="section" id="s29" data-category="concept">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">২৯</span> ইন্টারভিউ প্রশ্ন</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>বিগিনার</h3>
+    <p><strong>প্রশ্ন ১:</strong> CHR কী?<br>
+    <strong>উত্তর:</strong> Cloud Hosted Router — RouterOS-এর ভার্চুয়াল সংস্করণ।</p>
+    <p><strong>প্রশ্ন ২:</strong> EVE-NG-এ CHR-এর জন্য কোন ফাইল ফরম্যাট ডাউনলোড করতে হয়?<br>
+    <strong>উত্তর:</strong> Raw disk image (<code>.img</code>), .npk নয়। [citation:8]</p>
+    <p><strong>প্রশ্ন ৩:</strong> CHR-এর ডিফল্ট লগইন কী?<br>
+    <strong>উত্তর:</strong> admin, পাসওয়ার্ড খালি।</p>
+
+    <h3>ইন্টারমিডিয়েট</h3>
+    <p><strong>প্রশ্ন ৪:</strong> EVE-NG-এ CHR-এর জন্য ডিরেক্টরির নাম কী হওয়া উচিত?<br>
+    <strong>উত্তর:</strong> <code>mikrotik-<version></code> (যেমন <code>mikrotik-7.19.4</code>)। [citation:1][citation:11]</p>
+    <p><strong>প্রশ্ন ৫:</strong> <code>hda.qcow2</code> ফাইলের উদ্দেশ্য কী?<br>
+    <strong>উত্তর:</strong> EVE-NG QEMU-এর প্রত্যাশিত ডিস্ক ইমেজ ফরম্যাট ও নাম। [citation:6]</p>
+    <p><strong>প্রশ্ন ৬:</strong> <code>unl_wrapper -a fixpermissions</code> কেন চালাতে হয়?<br>
+    <strong>উত্তর:</strong> EVE-NG-এর ফাইল পারমিশন ঠিক করতে, নইলে নোড চালু নাও হতে পারে। [citation:6]</p>
+
+    <h3>অ্যাডভান্সড</h3>
+    <p><strong>প্রশ্ন ৭:</strong> নোড Start করলে সাথে সাথে Stop হয়ে যায় কেন?<br>
+    <strong>উত্তর:</strong> KVM/Nested Virtualization বন্ধ। <code>kvm-ok</code> চেক করুন এবং BIOS/VM-এ VT-x চালু করুন। [citation:10]</p>
+    <p><strong>প্রশ্ন ৮:</strong> iPXE বুট লুপ কেন হয়?<br>
+    <strong>উত্তর:</strong> ভুল ফাইল (.npk) ডাউনলোড করা হয়েছে, CHR Raw image নয়। [citation:8]</p>
+    <p><strong>প্রশ্ন ৯:</strong> ফ্রি লাইসেন্সের থ্রুপুট সীমা কত?<br>
+    <strong>উত্তর:</strong> ১ Mbps প্রতি ইন্টারফেস।</p>
+  </div>
+</section>
+
+<!-- 30 -->
+<section class="section" id="s30" data-category="lab">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">৩০</span> চ্যালেঞ্জ</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <p><strong>পরিস্থিতি:</strong> আপনাকে EVE-NG-তে একটি CHR কনফিগার করতে বলা হলো যেখানে:</p>
+    <ul>
+      <li>ether1 = Cloud0 (NAT, ইন্টারনেট)</li>
+      <li>ether2 = Internal Network (ল্যাব LAN, 10.10.10.0/24, DHCP সার্ভার)</li>
+      <li>ether3 = Internal Network (ম্যানেজমেন্ট, 192.168.100.0/24, WinBox শুধু এখান থেকে)</li>
+    </ul>
+    <p>শর্ত: admin পাসওয়ার্ড অবশ্যই পরিবর্তন করতে হবে। LAN ক্লায়েন্টরা NAT-এর মাধ্যমে ইন্টারনেট পাবে। WinBox শুধুমাত্র ether3 থেকে অ্যাক্সেসযোগ্য হবে।</p>
+
+    <details>
+      <summary style="cursor:pointer; color:var(--accent); font-weight:600;">💡 হিন্ট ১</summary>
+      <p>NAT-এর জন্য <code>/ip firewall nat add chain=srcnat out-interface=ether1 action=masquerade</code></p>
+    </details>
+    <details>
+      <summary style="cursor:pointer; color:var(--accent); font-weight:600;">💡 হিন্ট ২</summary>
+      <p>WinBox সীমিত করতে <code>/ip service set winbox address=192.168.100.0/24</code></p>
+    </details>
+    <details>
+      <summary style="cursor:pointer; color:var(--accent); font-weight:600;">💡 হিন্ট ৩</summary>
+      <p>DHCP সার্ভার ether2-তে দিন, pool 10.10.10.100-200, gateway 10.10.10.1</p>
+    </details>
+  </div>
+</section>
+
+<!-- 31 -->
+<section class="section" id="s31" data-category="command">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">৩১</span> চিট শিট</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>কমান্ড</th><th>উদ্দেশ্য</th><th>কখন</th></tr></thead>
+        <tbody>
+          <tr><td><code>mkdir -p /opt/unetlab/addons/qemu/mikrotik-7.x.x/</code></td><td>CHR ডিরেক্টরি তৈরি</td><td>ইমেজ আপলোডের আগে</td></tr>
+          <tr><td><code>mv chr-7.x.x.img hda.qcow2</code></td><td>ইমেজ প্রস্তুত</td><td>আপলোডের পর</td></tr>
+          <tr><td><code>unl_wrapper -a fixpermissions</code></td><td>পারমিশন ঠিক</td><td>সব ফাইল স্থাপনের পর</td></tr>
+          <tr><td><code>/interface print</code></td><td>ইন্টারফেস দেখুন</td><td>প্রথম বুট / সমস্যা</td></tr>
+          <tr><td><code>/ip address print</code></td><td>IP দেখুন</td><td>নেটওয়ার্কিং চেক</td></tr>
+          <tr><td><code>/ip dhcp-client add interface=ether1</code></td><td>DHCP থেকে IP নিন</td><td>Cloud0/NAT</td></tr>
+          <tr><td><code>/system license print</code></td><td>লাইসেন্স দেখুন</td><td>থ্রুপুট সমস্যা</td></tr>
+          <tr><td><code>/export compact</code></td><td>কনফিগারেশন ব্যাকআপ</td><td>পরিবর্তনের আগে</td></tr>
+          <tr><td><code>kvm-ok</code></td><td>KVM চেক</td><td>নোড Start না হলে</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- 32 -->
+<section class="section" id="s32" data-category="verify">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">৩২</span> মাস্টার কমান্ড চেকলিস্ট</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>Discovery</h3>
+    <ul class="checklist">
+      <li><input type="checkbox" id="mc-1"><label for="mc-1"><code>/interface print</code></label></li>
+      <li><input type="checkbox" id="mc-2"><label for="mc-2"><code>/ip address print</code></label></li>
+      <li><input type="checkbox" id="mc-3"><label for="mc-3"><code>/system resource print</code></label></li>
+    </ul>
+    <h3>Configuration</h3>
+    <ul class="checklist">
+      <li><input type="checkbox" id="mc-4"><label for="mc-4"><code>/ip dhcp-client add</code></label></li>
+      <li><input type="checkbox" id="mc-5"><label for="mc-5"><code>/ip address add</code></label></li>
+      <li><input type="checkbox" id="mc-6"><label for="mc-6"><code>/ip firewall filter add</code></label></li>
+    </ul>
+    <h3>Verification</h3>
+    <ul class="checklist">
+      <li><input type="checkbox" id="mc-7"><label for="mc-7"><code>/ping 8.8.8.8</code></label></li>
+      <li><input type="checkbox" id="mc-8"><label for="mc-8"><code>/system license print</code></label></li>
+      <li><input type="checkbox" id="mc-9"><label for="mc-9"><code>/interface monitor-traffic ether1</code></label></li>
+    </ul>
+    <h3>Recovery</h3>
+    <ul class="checklist">
+      <li><input type="checkbox" id="mc-10"><label for="mc-10"><code>/export compact</code></label></li>
+      <li><input type="checkbox" id="mc-11"><label for="mc-11">EVE-NG Lab Snapshot</label></li>
+    </ul>
+  </div>
+</section>
+
+<!-- 33 -->
+<section class="section" id="s33" data-category="verify">
+  <div class="section-header" role="button" tabindex="0" aria-expanded="false">
+    <h2><span class="section-number">৩৩</span> ফাইনাল চেকলিস্ট</h2>
+    <span class="section-toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <p>এই হ্যান্ডবুক শেষ করার পর আপনি নিম্নলিখিত কাজগুলো করতে সক্ষম হবেন:</p>
+    <ul class="checklist">
+      <li><input type="checkbox" id="fc-1"><label for="fc-1">EVE-NG-এ CHR ইনস্টল করতে পারবেন</label></li>
+      <li><input type="checkbox" id="fc-2"><label for="fc-2">সঠিক ডিরেক্টরি ও ফাইল নাম ব্যবহার করতে পারবেন</label></li>
+      <li><input type="checkbox" id="fc-3"><label for="fc-3">unl_wrapper দিয়ে পারমিশন ঠিক করতে পারবেন</label></li>
+      <li><input type="checkbox" id="fc-4"><label for="fc-4">EVE-NG GUI-তে MikroTik নোড যোগ করতে পারবেন</label></li>
+      <li><input type="checkbox" id="fc-5"><label for="fc-5">প্রাথমিক IP কনফিগারেশন করতে পারবেন</label></li>
+      <li><input type="checkbox" id="fc-6"><label for="fc-6">লাইসেন্স স্ট্যাটাস চেক ও ট্রায়াল চালু করতে পারবেন</label></li>
+      <li><input type="checkbox" id="fc-7"><label for="fc-7">সাধারণ সমস্যা Troubleshoot করতে পারবেন</label></li>
+      <li><input type="checkbox" id="fc-8"><label for="fc-8">কনফিগারেশন এক্সপোর্ট ও ল্যাব স্ন্যাপশট নিতে পারবেন</label></li>
+    </ul>
+
+    <div class="callout success">
+      <span class="callout-label">✅ অভিনন্দন</span>
+      আপনি MikroTik CHR on EVE-NG-এর সম্পূর্ণ হ্যান্ডবুক শেষ করেছেন। পরবর্তী পদক্ষেপ: EVE-NG-এ একাধিক CHR নিয়ে OSPF/BGP রাউটিং ল্যাব তৈরি করুন।
+    </div>
+  </div>
+</section>
+
+</main>
+
+<button class="back-to-top" id="backToTop" aria-label="উপরে ফিরে যান">↑</button>
+
+<script>
+(function() {
+  'use strict';
+
+  var themeToggle = document.getElementById('themeToggle');
+  var body = document.body;
+
+  function setTheme(theme) {
+    body.setAttribute('data-theme', theme);
+    themeToggle.textContent = theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
+    try { localStorage.setItem('chr-eve-theme', theme); } catch(e) {}
+  }
+
+  try {
+    var saved = localStorage.getItem('chr-eve-theme');
+    if (saved) setTheme(saved);
+  } catch(e) {}
+
+  themeToggle.addEventListener('click', function() {
+    var current = body.getAttribute('data-theme');
+    setTheme(current === 'dark' ? 'light' : 'dark');
+  });
+
+  var sections = document.querySelectorAll('.section');
+
+  function toggleSection(section) {
+    var header = section.querySelector('.section-header');
+    var isOpen = section.classList.contains('open');
+    if (isOpen) {
+      section.classList.remove('open');
+      header.setAttribute('aria-expanded', 'false');
+    } else {
+      section.classList.add('open');
+      header.setAttribute('aria-expanded', 'true');
+    }
+    updateProgress();
+  }
+
+  sections.forEach(function(section) {
+    var header = section.querySelector('.section-header');
+    header.addEventListener('click', function() { toggleSection(section); });
+    header.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleSection(section);
+      }
+    });
+  });
+
+  document.getElementById('expandAll').addEventListener('click', function() {
+    sections.forEach(function(s) {
+      s.classList.add('open');
+      s.querySelector('.section-header').setAttribute('aria-expanded', 'true');
+    });
+    updateProgress();
+  });
+
+  document.getElementById('collapseAll').addEventListener('click', function() {
+    sections.forEach(function(s) {
+      s.classList.remove('open');
+      s.querySelector('.section-header').setAttribute('aria-expanded', 'false');
+    });
+    updateProgress();
+  });
+
+  function updateProgress() {
+    var total = sections.length;
+    var opened = document.querySelectorAll('.section.open').length;
+    var pct = total > 0 ? Math.round((opened / total) * 100) : 0;
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent =
+      'অগ্রগতি: ' + pct + '% (' + opened + 'টি সেকশন দেখা হয়েছে, মোট ' + total + 'টি)';
+  }
+
+  var searchInput = document.getElementById('searchInput');
+  var searchTimeout;
+
+  searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(function() { performSearch(); }, 250);
+  });
+
+  function performSearch() {
+    var query = searchInput.value.toLowerCase().trim();
+    var visibleCount = 0;
+
+    sections.forEach(function(section) {
+      var text = section.textContent.toLowerCase();
+      var matches = query === '' || text.indexOf(query) !== -1;
+      if (matches) {
+        section.classList.remove('hidden');
+        visibleCount++;
+        if (query !== '') {
+          section.classList.add('open');
+          section.querySelector('.section-header').setAttribute('aria-expanded', 'true');
+        }
+      } else {
+        section.classList.add('hidden');
+      }
+    });
+
+    var existing = document.querySelector('.no-results');
+    if (existing) existing.remove();
+
+    if (visibleCount === 0 && query !== '') {
+      var noResults = document.createElement('div');
+      noResults.className = 'no-results';
+      noResults.innerHTML = 'কোনো ফল পাওয়া যায়নি: "<strong>' + escapeHtml(query) + '</strong>"<br>অনুগ্রহ করে অন্য শব্দ দিয়ে চেষ্টা করুন।';
+      document.getElementById('mainContent').appendChild(noResults);
+    }
+
+    updateProgress();
+  }
+
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.appendChild(document.createTextNode(str));
+    return div.innerHTML;
+  }
+
+  var filterBtns = document.querySelectorAll('.filter-btn');
+  filterBtns.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      filterBtns.forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      var filter = btn.dataset.filter;
+
+      sections.forEach(function(section) {
+        var cats = (section.dataset.category || '').split(',');
+        if (filter === 'all' || cats.indexOf(filter) !== -1) {
+          section.classList.remove('hidden');
+        } else {
+          section.classList.add('hidden');
+        }
+      });
+
+      if (searchInput.value.trim() !== '') {
+        searchInput.value = '';
+        performSearch();
+      }
+    });
+  });
+
+  window.copyCode = function(btn) {
+    var wrapper = btn.closest('.code-wrapper');
+    var codeEl = wrapper.querySelector('pre code') || wrapper.querySelector('pre');
+    var text = codeEl.textContent;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function() {
+        btn.textContent = 'কপি হয়েছে ✓';
+        btn.classList.add('copied');
+        setTimeout(function() {
+          btn.textContent = 'কপি';
+          btn.classList.remove('copied');
+        }, 2000);
+      }).catch(function() { fallbackCopy(text, btn); });
+    } else {
+      fallbackCopy(text, btn);
+    }
+  };
+
+  function fallbackCopy(text, btn) {
+    try {
+      var textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      btn.textContent = 'কপি হয়েছে ✓';
+      btn.classList.add('copied');
+      setTimeout(function() {
+        btn.textContent = 'কপি';
+        btn.classList.remove('copied');
+      }, 2000);
+    } catch (err) {
+      btn.textContent = 'কপি ব্যর্থ';
+      setTimeout(function() { btn.textContent = 'কপি'; }, 2000);
+    }
+  }
+
+  var tocToggle = document.getElementById('tocToggle');
+  var tocNav = document.getElementById('tocNav');
+
+  tocToggle.addEventListener('click', function() {
+    var isVisible = tocNav.classList.contains('show');
+    tocNav.classList.toggle('show');
+    tocToggle.setAttribute('aria-expanded', String(!isVisible));
+    tocToggle.textContent = isVisible ? '📑 সূচিপত্র দেখুন' : '📑 সূচিপত্র লুকান';
+  });
+
+  var tocLinks = document.querySelectorAll('.toc-list a');
+
+  function highlightTOC() {
+    var scrollPos = window.scrollY + 100;
+    var activeId = '';
+
+    sections.forEach(function(section) {
+      if (section.offsetTop <= scrollPos && section.offsetTop + section.offsetHeight > scrollPos) {
+        activeId = section.id;
+      }
+    });
+
+    tocLinks.forEach(function(link) {
+      link.classList.remove('active');
+      if (link.getAttribute('href') === '#' + activeId) {
+        link.classList.add('active');
+      }
+    });
+  }
+
+  window.addEventListener('scroll', highlightTOC, { passive: true });
+
+  var backToTop = document.getElementById('backToTop');
+
+  window.addEventListener('scroll', function() {
+    if (window.scrollY > 400) {
+      backToTop.classList.add('visible');
+    } else {
+      backToTop.classList.remove('visible');
+    }
+  }, { passive: true });
+
+  backToTop.addEventListener('click', function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  updateProgress();
+  highlightTOC();
+
+})();
+</script>
+
+</body>
+</html>
